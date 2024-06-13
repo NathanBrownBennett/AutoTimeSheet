@@ -48,13 +48,38 @@ def extract_timesheet_data(doc_path):
         "Entries": []
     }
 
-    # Extract the week beginning and employee name from the document
-    timesheet_data["Week Beginning"] = doc.paragraphs[-2].text.split("…")[1].strip()
-    timesheet_data["Employee Name"] = doc.paragraphs[-1].text.split("…")[1].strip()
+    # Function to clean and extract date from text
+    def extract_date(text):
+        return text.split('…')[-1].strip()
+
+    # Function to find a paragraph that contains a specific keyword, ignoring formatting
+    def find_paragraph_with_keyword(doc, keywords):
+        for paragraph in doc.paragraphs:
+            text = paragraph.text.strip()
+            for keyword in keywords:
+                if keyword.lower() in text.lower():
+                    return text
+        return None
+
+    # Search for "Week Beginning" text and extract the date
+    week_beginning_text = find_paragraph_with_keyword(doc, ["Week Beginning", "Week Beginning ", "week Beginning:", "Week beginning:"])
+    if week_beginning_text:
+        timesheet_data["Week Beginning"] = extract_date(week_beginning_text)
+    else:
+        print("Error: 'Week Beginning' information is not found.")
+        return None
+
+    # Search for "Employee Name" or "Name" text and extract the name
+    employee_name_text = find_paragraph_with_keyword(doc, ["Employee Name", "Name:", "Name", "Name "])
+    if employee_name_text:
+        timesheet_data["Employee Name"] = extract_date(employee_name_text)
+    else:
+        print("Error: 'Employee Name' information is not found.")
+        return None
 
     # Extract table data
     table = doc.tables[0]
-    for row in table.rows[1:6]:  # Assuming 5 days of data (Mon-Fri)
+    for row in table.rows[1:11]:  # Assuming 7 days of data plus the last two columns (Mon-Sun) + Total normal hours + Total overtime hours
         cells = row.cells
         entry = {
             "DATE": cells[0].text.strip(),

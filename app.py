@@ -4,8 +4,17 @@ from werkzeug.utils import secure_filename
 from docx import Document
 import json
 from datetime import datetime, timedelta
+from docx.enum.section import WD_ORIENTATION
+from docx.shared import Inches
+from timesheet2json import extract_timesheet_data
+from totalHourDict import extract_daily_timesheet_data
+from updateExcel import update_excel
+from docx.shared import Pt
+from docx.oxml import OxmlElement
+from docx.oxml.ns import nsdecls, qn as xml_qn
 
 app = Flask(__name__)
+app.config['STATIC_FOLDER'] = 'static'
 app.config['UPLOAD_FOLDER'] = 'timesheets'
 app.config['PROCESSED_FOLDER'] = 'json/daily'
 app.config['ALLOWED_EXTENSIONS'] = {'docx', 'pdf'}
@@ -17,73 +26,17 @@ os.makedirs(app.config['PROCESSED_FOLDER'], exist_ok=True)
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-def extract_timesheet_data(doc_path):
-    doc = Document(doc_path)
-
-    # Initialize dictionary to store extracted data
-    timesheet_data = {
-        "Employee Name": "",
-        "Week Beginning": "",
-        "Entries": []
-    }
-
-    # Extract the week beginning and employee name from the document
-    timesheet_data["Week Beginning"] = doc.paragraphs[-2].text.split("…")[1].strip()
-    timesheet_data["Employee Name"] = doc.paragraphs[-1].text.split("…")[1].strip()
-
-    # Extract table data
-    table = doc.tables[0]
-    for row in table.rows[1:6]:  # Assuming 5 days of data (Mon-Fri)
-        cells = row.cells
-        entry = {
-            "DATE": cells[0].text.strip(),
-            "WORK SITE ADDRESS": cells[1].text.strip(),
-            "START": cells[2].text.strip(),
-            "FINISH": cells[3].text.strip(),
-            "LUNCH": cells[4].text.strip(),
-            "BASIC HRS": cells[5].text.strip(),
-            "O/T 1.5": cells[6].text.strip(),
-            "O/T 2.0": cells[7].text.strip()
-        }
-        timesheet_data["Entries"].append(entry)
-
-    return timesheet_data
-
 def save_timesheet_data(timesheet_data, output_path):
     with open(output_path, 'w') as json_file:
         json.dump(timesheet_data, json_file, indent=4)
 
-def calculate_hours_and_pay(json_path):
-    with open(json_path, 'r') as json_file:
-        timesheet_data = json.load(json_file)
-
-    # Initialize dictionary for calculated data
-    employee_data = {
-        "Employee Name": timesheet_data["Employee Name"],
-        "Week": timesheet_data["Week Beginning"],
-        "Basic": 40.0,
-        "X1.5": 0.0,
-        "X2.0": 0.0,
-        "pay rate/hr": 0,  
-        "Annual": 0.00,  
-        "per month": 0  
-    }
-
-    # Calculate total hours
-    for entry in timesheet_data["Entries"]:
-        employee_data["Basic"] += float(entry["BASIC HRS"])
-        employee_data["X1.5"] += float(entry["O/T 1.5"])
-        employee_data["X2.0"] += float(entry["O/T 2.0"])
-
-    calculated_json_path = os.path.join(app.config['PROCESSED_FOLDER'], os.path.basename(json_path).replace('.json', '_calculated.json'))
-    with open(calculated_json_path, 'w') as json_file:
-        json.dump(employee_data, json_file, indent=4)
-
-    return calculated_json_path
-
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    return render_template('index.html')
+    return render_template('index.html', title='Timesheet Processor')
+
+@app.route('/info.html')
+def info():
+    return render_template('info.html', title='Application Information')
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -101,28 +54,61 @@ def upload_file():
         timesheet_json_path = os.path.join(app.config['PROCESSED_FOLDER'], filename.replace('.docx', '.json'))
         save_timesheet_data(timesheet_data, timesheet_json_path)
 
-        calculated_json_path = calculate_hours_and_pay(timesheet_json_path)
+        calculated_json_path = extract_daily_timesheet_data(timesheet_json_path)
         return send_from_directory(app.config['PROCESSED_FOLDER'], os.path.basename(calculated_json_path))
     return redirect(request.url)
 
 @app.route('/download_template')
+
+def set_row_height(row, height):
+    """
+    Set the height of a row in the table.
+    """
+    tr = row._tr
+    trPr = tr.get_or_add_trPr()
+    trHeight = OxmlElement('w:trHeight')
+    trHeight.set(qn('w:val'), str(height))
+    trHeight.set(qn('w:hRule'), "atLeast")
+    trPr.append(trHeight)
+    
 def download_template():
     doc = Document()
     current_date = datetime.now()
     week_start = current_date - timedelta(days=current_date.weekday())
-    
-    doc.add_heading('Timesheet', 0)
-    doc.add_paragraph(f'Week Beginning: {week_start.strftime("%d %B %Y")}')
-    
-    table = doc.add_table(rows=7, cols=8)
-    headers = ["DATE", "WORK SITE ADDRESS", "START", "FINISH", "LUNCH", "BASIC HRS", "O/T 1.5", "O/T 2.0"]
-    for i, header in enumerate(headers):
-        table.cell(0, i).text = header
 
-    for i in range(1, 6):
-        day = week_start + timedelta(days=i-1)
-        table.cell(i, 0).text = day.strftime("%a %d")
+    section = doc.sections[0]
+    section.orientation = WD_ORIENTATION.LANDSCAPE
+    section.page_width = Inches(11)
+    section.page_height = Inches(8.5)
+
+    doc.add_heading('GMT ELECTRICAL SERVICES LTD – WEEKLY TIMESHEET', 0)
+    doc.add_paragraph(f'Week Beginning: {week_start.strftime("%d %B %Y")}')
+    doc.add_paragraph(f'Name:' f'{'_'*20}')
+
+    table = doc.add_table(rows=7, cols=8, style='Table Grid')
+    headers = ["DATE", "WORK SITE ADDRESS", "START", "FINISH", "LUNCH", "BASIC HRS", "O/T 1.5", "O/T 2.0"]
+
+    # Calculate column width
+    total_width = Inches(11)  # Page width
+    column_width = total_width / len(headers)
     
+    for i, header in enumerate(headers):
+        cell = table.cell(0, i)
+        cell.width = column_width
+        cell.text = header
+
+    for i in range(1, 7):
+        row = table.rows[i]
+        set_row_height(row, Pt(46))  # Set row height to accommodate roughly four lines of text
+        if i < 6:
+            day = week_start + timedelta(days=i-1)
+            row.cells[0].text = day.strftime("%a %d")
+
+    # Ensure table spans full width
+    for row in table.rows:
+        for cell in row.cells:
+            cell.width = column_width
+
     template_path = os.path.join(app.config['UPLOAD_FOLDER'], 'timesheet_template.docx')
     doc.save(template_path)
     return send_from_directory(app.config['UPLOAD_FOLDER'], 'timesheet_template.docx')

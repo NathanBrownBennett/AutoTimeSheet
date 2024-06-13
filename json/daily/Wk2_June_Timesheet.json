@@ -1,0 +1,106 @@
+{
+    "Employee Name": "",
+    "Week Beginning": "",
+    "Entries": [
+        {
+            "DATE": "June \u201824",
+            "WORK SITE ADDRESS": "",
+            "START": "",
+            "FINISH": "",
+            "LUNCH": "",
+            "BASIC HRS": "",
+            "O/T 1.5": "",
+            "O/T 2.0": ""
+        },
+        {
+            "DATE": "Mon 3rd",
+            "WORK SITE ADDRESS": "Enecto",
+            "START": "7.00",
+            "FINISH": "6.00",
+            "LUNCH": "0",
+            "BASIC HRS": "8",
+            "O/T 1.5": "3",
+            "O/T 2.0": ""
+        },
+        {
+            "DATE": "Tues 4th",
+            "WORK SITE ADDRESS": "Enecto",
+            "START": "7.00",
+            "FINISH": "6.30",
+            "LUNCH": "0",
+            "BASIC HRS": "8",
+            "O/T 1.5": "3.5",
+            "O/T 2.0": ""
+        },
+        {
+            "DATE": "Wed 5th",
+            "WORK SITE ADDRESS": "Carrier",
+            "START": "6.30",
+            "FINISH": "6.00",
+            "LUNCH": "0",
+            "BASIC HRS": "8",
+            "O/T 1.5": "3.5",
+            "O/T 2.0": ""
+        },
+        {
+            "DATE": "Thur 6th",
+            "WORK SITE ADDRESS": "Atlas, Artic, Enecto",
+            "START": "7.00",
+            "FINISH": "6.30",
+            "LUNCH": "0",
+            "BASIC HRS": "8",
+            "O/T 1.5": "3.5",
+            "O/T 2.0": ""
+        },
+        {
+            "DATE": "Fri 7th",
+            "WORK SITE ADDRESS": "Atlas, Mitie",
+            "START": "6.30",
+            "FINISH": "4.00",
+            "LUNCH": "0",
+            "BASIC HRS": "8",
+            "O/T 1.5": "1.5",
+            "O/T 2.0": ""
+        },
+        {
+            "DATE": "Sat 8th",
+            "WORK SITE ADDRESS": "",
+            "START": "",
+            "FINISH": "",
+            "LUNCH": "",
+            "BASIC HRS": "",
+            "O/T 1.5": "",
+            "O/T 2.0": ""
+        },
+        {
+            "DATE": "Sun 9th",
+            "WORK SITE ADDRESS": "",
+            "START": "",
+            "FINISH": "",
+            "LUNCH": "",
+            "BASIC HRS": "",
+            "O/T 1.5": "",
+            "O/T 2.0": ""
+        },
+        {
+            "DATE": "Total normal hrs.",
+            "WORK SITE ADDRESS": "",
+            "START": "",
+            "FINISH": "",
+            "LUNCH": "",
+            "BASIC HRS": "40",
+            "O/T 1.5": "",
+            "O/T 2.0": ""
+        },
+        {
+            "DATE": "Overtime hrs",
+            "WORK SITE ADDRESS": "",
+            "START": "",
+            "FINISH": "",
+            "LUNCH": "",
+            "BASIC HRS": "",
+            "O/T 1.5": "15",
+            "O/T 2.0": ""
+        }
+    ]
+}

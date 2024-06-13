@@ -1,0 +1,66 @@
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f0f4f8; /* Light pastel background */
+    color: #333; /* Softer than black for text */
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.container {
+    max-width: 800px; /* Ensures content is centered and not too wide */
+    justify-content: center;
+}
+
+h1 {
+    color: #6a7ba2; /* Pastel blue for headers */
+    justify-content: center;
+}
+
+.nav-link {
+    color: #7692ff; /* Pastel link color */
+}
+
+form {
+    background-color: #ffffff; /* White background for forms */
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Subtle shadow for depth */
+    margin-top: 20px;
+}
+
+input[type="file"] {
+    border: 2px dashed #92a8d1; /* Dashed border for file input */
+}
+
+.btn-primary {
+    background-color: #92a8d1; /* Pastel primary button */
+    border: none;
+}
+
+.btn-secondary {
+    background-color: #f9d5e5; /* Pastel secondary button */
+    border: none;
+}
+
+.card {
+    background-color: #eef1f5; /* Light pastel background for cards */
+    margin-top: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Subtle shadow for cards */
+    border-radius: 8px;
+}
+
+.card-header {
+    margin-top: 20vh;
+    background-color: #b8c0d2; /* Slightly darker pastel for headers */
+    color: #ffffff;
+    border-radius: 8px 8px 0 0; /* Rounded corners at the top */
+}
+
+footer {
+    margin-top: 40px;
+    color: #6a7ba2; /* Pastel footer text */
+    text-align: center;
+    padding: 20px;
+}
