@@ -16,7 +16,7 @@ To set up the application, follow these steps:
 2. Ensure you have Python installed. This application was developed with Python 3.8.
 3. Install the required Python packages using pip:
     ```
-    pip install Flask python-docx requests
+    pip install -r requirements.txt
     ```
 4. Configure the application settings in app.py, including the upload and processed folders' paths, and allowed file extensions.
 5. Start the application:
