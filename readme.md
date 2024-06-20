@@ -18,12 +18,17 @@ To set up the application, follow these steps:
     ```
     pip install -r requirements.txt
     ```
-4. Configure the application settings in app.py, including the upload and processed folders' paths, and allowed file extensions.
-5. Start the application:
+4. **Important:** Before running the application, you must set up the Azure AD credentials for API authentication. Run [`create_ADCredentialsdb.py`] to create and configure the credentials database:
+    ```
+    python create_ADCredentialsdb.py
+    ```
+    Follow the prompts to enter your Azure AD Client ID, Client Secret, and Tenant ID. These credentials are necessary for the application to authenticate and update the Excel sheet via the API.
+5. Configure the application settings in app.py, including the upload and processed folders' paths, and allowed file extensions.
+6. Start the application:
     ```
     python app.py
     ```
-6. The application will be accessible at http://localhost:5000.
+7. The application will be accessible at http://localhost:5000.
 
 ## Usage
 - **Uploading a Timesheet:**
@@ -35,7 +40,7 @@ To set up the application, follow these steps:
   - After uploading a timesheet, the application will automatically process the document and provide a link to download the processed data in JSON format.
 
 ## Configuration
-- **API Configuration:** Update updateexcel.py with your API endpoint and API key to enable updating the Excel sheet.
+- **API Configuration:** Ensure you have run [`create_ADCredentialsdb.py`] to set up your Azure AD credentials for API authentication. Update [`updateexcel.py`] with your specific requirements to enable updating the Excel sheet.
 - **File Extensions:** Modify app.config['ALLOWED_EXTENSIONS'] in app.py to change allowed file types for upload.
 
 ## Dependencies
