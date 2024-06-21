@@ -1,5 +1,6 @@
 from flask import Flask, request, render_template, send_from_directory, redirect, url_for, jsonify, flash
 import os
+from app import SMTPConfig
 from werkzeug.utils import secure_filename
 from docx import Document
 import json
@@ -16,11 +17,11 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_mail import Mail, Message
 from werkzeug.security import generate_password_hash, check_password_hash
-import os
 import json
 import requests
 import msal
 import openpyxl
+import sqlite3
 
 app = Flask(__name__)
 app.config['STATIC_FOLDER'] = 'static'
@@ -33,13 +34,18 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'docx', 'pdf'}
 
-# Mail configuration
-app.config['MAIL_SERVER'] = 'smtp.example.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'your_email@example.com'
-app.config['MAIL_PASSWORD'] = 'your_email_password'
-app.config['MAIL_DEFAULT_SENDER'] = 'your_email@example.com'
+def load_email_config():
+    smtp_config = SMTPConfig.query.first()
+    if smtp_config:
+        app.config['MAIL_SERVER'] = smtp_config.mail_server
+        app.config['MAIL_PORT'] = smtp_config.mail_port
+        app.config['MAIL_USE_TLS'] = smtp_config.use_tls
+        app.config['MAIL_USERNAME'] = smtp_config.username
+        app.config['MAIL_PASSWORD'] = smtp_config.password
+        app.config['MAIL_DEFAULT_SENDER'] = smtp_config.default_sender
+    else:
+        print("SMTP configuration not found in the database.")
+
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
@@ -49,6 +55,23 @@ mail = Mail(app)
 # Ensure upload and processed directories exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['PROCESSED_FOLDER'], exist_ok=True)
+
+def get_config():
+    """Retrieve configuration data from the config table in msal.db"""
+    conn = sqlite3.connect('msal.db')
+    cur = conn.cursor()
+    cur.execute("SELECT name, value FROM config")
+
+    config_data = {name: value for name, value in cur.fetchall()}
+    return config_data
+
+config = get_config()
+client_id = config.get('client_id')
+client_secret = config.get('client_secret')
+tenant_id = config.get('tenant_id')
+scope = config.get('scope')
+graph_api_endpoint = config.get('graph_api_endpoint')
+excel_file_path = config.get('excel_file_path')
 
 #MODELS
 
@@ -168,6 +191,26 @@ def delete_timesheet(timesheet_id):
     db.session.commit()
     return redirect(url_for('dashboard'))
 
+def get_access_token(client_id, client_secret, tenant_id, scope):
+    authority = f"https://login.microsoftonline.com/{tenant_id}"
+    app = msal.ConfidentialClientApplication(
+        client_id,
+        authority=authority,
+        client_credential=client_secret,
+    )
+    
+    result = app.acquire_token_for_client(scopes=scope)
+    
+    if "access_token" in result:
+        return result["access_token"]
+    else:
+        print("Failed to obtain access token")
+        print(result.get("error"))
+        print(result.get("error_description"))
+        print(result.get("correlation_id"))  # You might want to log this for later correlation investigation.
+        return None
+
+
 def update_excel_file(filepath):
     # Load calculated employee data
     calculated_json_path = '/mnt/data/employee_data.json'
@@ -284,4 +327,5 @@ def download_template():
     return send_from_directory(app.config['UPLOAD_FOLDER'], 'timesheet_template.docx')
 
 if __name__ == '__main__':
+    load_email_config()
     app.run(debug=True)
