@@ -403,7 +403,7 @@ def download_template():
     section.page_height = Inches(8.5)
     doc.add_heading('GMT ELECTRICAL SERVICES LTD – WEEKLY TIMESHEET', 0)
     doc.add_paragraph(f'Week Beginning: {week_start.strftime("%d %B %Y")}')
-    doc.add_paragraph(f'Name:' f'{'_'*20}')
+    doc.add_paragraph(f'Name:' f'{"_"*20}')
     table = doc.add_table(rows=7, cols=8, style='Table Grid')
     headers = ["DATE", "WORK SITE ADDRESS", "START", "FINISH", "LUNCH", "BASIC HRS", "O/T 1.5", "O/T 2.0"]
     total_width = Inches(11)
@@ -463,4 +463,4 @@ if __name__ == '__main__':
         populate_config()
         load_config()
         load_email_config()
-    app.run(debug=True)
+    app.run(debug=True, port=5000)
