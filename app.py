@@ -1,18 +1,7 @@
-from flask import Flask, request, render_template, send_from_directory, redirect, url_for, jsonify, flash
+from flask import Blueprint, Flask, request, render_template, send_from_directory, redirect, url_for, jsonify, flash
 import os
-from app import SMTPConfig
 from werkzeug.utils import secure_filename
-from docx import Document
-import json
 from datetime import datetime, timedelta
-from docx.enum.section import WD_ORIENTATION
-from docx.shared import Inches
-from timesheet2json import extract_timesheet_data
-from totalHourDict import extract_daily_timesheet_data
-from updateExcel import update_excel
-from docx.shared import Pt
-from docx.oxml import OxmlElement
-from docx.oxml.ns import nsdecls, qn as xml_qn
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_mail import Mail, Message
@@ -21,7 +10,12 @@ import json
 import requests
 import msal
 import openpyxl
-import sqlite3
+from docx import Document
+from docx.enum.section import WD_ORIENTATION
+from docx.shared import Inches, Pt
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn as xml_qn
+from flask_migrate import Migrate
 
 app = Flask(__name__)
 app.config['STATIC_FOLDER'] = 'static'
@@ -34,20 +28,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'docx', 'pdf'}
 
-def load_email_config():
-    smtp_config = SMTPConfig.query.first()
-    if smtp_config:
-        app.config['MAIL_SERVER'] = smtp_config.mail_server
-        app.config['MAIL_PORT'] = smtp_config.mail_port
-        app.config['MAIL_USE_TLS'] = smtp_config.use_tls
-        app.config['MAIL_USERNAME'] = smtp_config.username
-        app.config['MAIL_PASSWORD'] = smtp_config.password
-        app.config['MAIL_DEFAULT_SENDER'] = smtp_config.default_sender
-    else:
-        print("SMTP configuration not found in the database.")
-
-
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 mail = Mail(app)
@@ -56,40 +38,191 @@ mail = Mail(app)
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['PROCESSED_FOLDER'], exist_ok=True)
 
-def get_config():
-    """Retrieve configuration data from the config table in msal.db"""
-    conn = sqlite3.connect('msal.db')
-    cur = conn.cursor()
-    cur.execute("SELECT name, value FROM config")
+# Global variable to store config
+config = {}
 
-    config_data = {name: value for name, value in cur.fetchall()}
-    return config_data
-
-config = get_config()
-client_id = config.get('client_id')
-client_secret = config.get('client_secret')
-tenant_id = config.get('tenant_id')
-scope = config.get('scope')
-graph_api_endpoint = config.get('graph_api_endpoint')
-excel_file_path = config.get('excel_file_path')
-
-#MODELS
-
-class User(db.Model, UserMixin):
+class Config(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(150), unique=True, nullable=False)
-    email = db.Column(db.String(150), unique=True, nullable=False)
-    password = db.Column(db.String(150), nullable=False)
-    role = db.Column(db.String(10), nullable=False)  # 'admin' or 'employee'
+    name = db.Column(db.String(64), unique=True, nullable=False)
+    value = db.Column(db.String(128), nullable=False)
+
+class Role(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), unique=True)
+
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+    role_id = db.Column(db.Integer, db.ForeignKey('role.id'))
+    role = db.relationship('Role', backref=db.backref('users', lazy=True))
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    @property
+    def is_admin(self):
+        return self.role.name == 'admin'
+
+    def __repr__(self):
+        return f'<User {self.username}>'
+
+class JobCard(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    job_id = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.String(200), nullable=False)
+    location = db.Column(db.String(100), nullable=False)
+    company = db.Column(db.String(100), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    completed_by = db.Column(db.String(100), nullable=False)
+    duration = db.Column(db.Float, nullable=False)
+    picture = db.Column(db.String(100))
+    video = db.Column(db.String(100))
 
 class Timesheet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    filename = db.Column(db.String(150), nullable=False)
-    filepath = db.Column(db.String(150), nullable=False)
-    upload_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    approved = db.Column(db.Boolean, default=False)
-    
+    week_start = db.Column(db.Date, nullable=False)
+    date_commencing = db.Column(db.Date, nullable=False)
+    hours_worked = db.Column(db.Float, nullable=False)
+
+    user = db.relationship('User', backref=db.backref('timesheets', lazy=True))
+
+# Define the Blueprint for admin routes
+admin_bp = Blueprint('admin', __name__)
+
+@admin_bp.route('/admin', methods=['GET', 'POST'])
+@login_required
+def admin_dashboard():
+    if not current_user.is_admin:
+        flash('Access denied.', 'danger')
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        role_name = request.form.get('role')
+        role = Role.query.filter_by(name=role_name).first()
+        if role is None:
+            role = Role(name=role_name)
+            db.session.add(role)
+            db.session.commit()
+        user = User(username=username, role=role)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        flash('User created successfully.', 'success')
+
+    users = User.query.all()
+    return render_template('admin.html', users=users)
+
+@admin_bp.route('/create_job_card', methods=['GET', 'POST'])
+@login_required
+def create_job_card():
+    if request.method == 'POST':
+        job_id = request.form.get('job_id')
+        description = request.form.get('description')
+        location = request.form.get('location')
+        company = request.form.get('company')
+        date = request.form.get('date')
+        price = request.form.get('price')
+        completed_by = request.form.get('completed_by')
+        duration = request.form.get('duration')
+        picture = request.files.get('picture')
+        video = request.files.get('video')
+
+        picture_filename = secure_filename(picture.filename)
+        video_filename = secure_filename(video.filename)
+        picture.save(os.path.join('static/uploads', picture_filename))
+        video.save(os.path.join('static/uploads', video_filename))
+
+        job_card = JobCard(
+            job_id=job_id,
+            description=description,
+            location=location,
+            company=company,
+            date=date,
+            price=price,
+            completed_by=completed_by,
+            duration=duration,
+            picture=picture_filename,
+            video=video_filename
+        )
+        db.session.add(job_card)
+        db.session.commit()
+        flash('Job card created successfully.', 'success')
+        return redirect(url_for('admin.admin_dashboard'))
+
+    return render_template('create_job_card.html')
+
+@admin_bp.route('/export_job_cards', methods=['GET'])
+@login_required
+def export_job_cards():
+    job_cards = JobCard.query.all()
+    data = []
+    for job in job_cards:
+        data.append({
+            'job_id': job.job_id,
+            'description': job.description,
+            'location': job.location,
+            'company': job.company,
+            'date': job.date.strftime('%Y-%m-%d'),
+            'price': job.price,
+            'completed_by': job.completed_by,
+            'duration': job.duration
+        })
+    return jsonify(data)
+
+@admin_bp.route('/create_timesheet', methods=['GET', 'POST'])
+@login_required
+def create_timesheet():
+    if request.method == 'POST':
+        week_start = request.form.get('week_start')
+        date_commencing = request.form.get('date_commencing')
+        hours_worked = request.form.get('hours_worked')
+        timesheet = Timesheet(
+            user_id=current_user.id,
+            week_start=week_start,
+            date_commencing=date_commencing,
+            hours_worked=hours_worked
+        )
+        db.session.add(timesheet)
+        db.session.commit()
+        flash('Timesheet created successfully.', 'success')
+        return redirect(url_for('dashboard'))
+
+    return render_template('create_timesheet.html')
+
+@admin_bp.route('/export_timesheets', methods=['GET'])
+@login_required
+def export_timesheets():
+    timesheets = Timesheet.query.filter_by(user_id=current_user.id).all()
+    data = []
+    for sheet in timesheets:
+        data.append({
+            'week_start': sheet.week_start.strftime('%Y-%m-%d'),
+            'hours_worked': sheet.hours_worked,
+            'date_commencing': sheet.date_commencing.strftime('%Y-%m-%d'),
+            'user_id': sheet.user_id
+        })
+    return jsonify(data)
+
+def load_email_config():
+    smtp_config = Config.query.filter_by(name='smtp').first()
+    if smtp_config:
+        app.config['MAIL_SERVER'] = smtp_config.value
+        app.config['MAIL_PORT'] = smtp_config.value
+        app.config['MAIL_USE_TLS'] = smtp_config.value
+        app.config['MAIL_USERNAME'] = smtp_config.value
+        app.config['MAIL_PASSWORD'] = smtp_config.value
+        app.config['MAIL_DEFAULT_SENDER'] = smtp_config.value
+    else:
+        print("SMTP configuration not found in the database.")
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -198,42 +331,32 @@ def get_access_token(client_id, client_secret, tenant_id, scope):
         authority=authority,
         client_credential=client_secret,
     )
-    
     result = app.acquire_token_for_client(scopes=scope)
-    
     if "access_token" in result:
         return result["access_token"]
     else:
         print("Failed to obtain access token")
         print(result.get("error"))
         print(result.get("error_description"))
-        print(result.get("correlation_id"))  # You might want to log this for later correlation investigation.
+        print(result.get("correlation_id"))
         return None
 
-
 def update_excel_file(filepath):
-    # Load calculated employee data
     calculated_json_path = '/mnt/data/employee_data.json'
     with open(calculated_json_path, 'r') as json_file:
         employee_data = json.load(json_file)
-    
-    # Get access token
-    access_token = get_access_token(client_id, client_secret, tenant_id, scope)
-    
-    # Update the Excel file
+    access_token = get_access_token(config['client_id'], config['client_secret'], config['tenant_id'], config['scope'])
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json"
     }
-    workbook_url = f"{graph_api_endpoint}/me/drive/root:/{excel_file_path}:/workbook/worksheets"
+    workbook_url = f"{config['graph_api_endpoint']}/me/drive/root:/{config['excel_file_path']}:/workbook/worksheets"
     response = requests.get(workbook_url, headers=headers)
     if response.status_code != 200:
         print(f"Failed to get worksheet. Status code: {response.status_code}")
         return
-
     worksheets = response.json()["value"]
-    sheet_id = worksheets[0]["id"]  # Assuming we're updating the first worksheet
-
+    sheet_id = worksheets[0]["id"]
     cell_updates = [
         {
             "range": "A1",
@@ -255,14 +378,12 @@ def update_excel_file(filepath):
             ]]
         }
     ]
-
     for update in cell_updates:
-        update_url = f"{graph_api_endpoint}/me/drive/root:/{excel_file_path}:/workbook/worksheets/{sheet_id}/range(address='{update['range']}')"
+        update_url = f"{config['graph_api_endpoint']}/me/drive/root:/{config['excel_file_path']}:/workbook/worksheets/{sheet_id}/range(address='{update['range']}')"
         response = requests.patch(update_url, headers=headers, json={"values": update["values"]})
         if response.status_code != 200:
             print(f"Failed to update cell {update['range']}. Status code: {response.status_code}")
             return
-
     print("Excel sheet updated successfully.")
     
 def send_approval_email(user_id):
@@ -271,61 +392,75 @@ def send_approval_email(user_id):
     msg.body = "Your timesheet has been approved and updated."
     mail.send(msg)
 
-
 @app.route('/download_template')
+def download_template():
+    doc = Document()
+    current_date = datetime.now()
+    week_start = current_date - timedelta(days=current_date.weekday())
+    section = doc.sections[0]
+    section.orientation = WD_ORIENTATION.LANDSCAPE
+    section.page_width = Inches(11)
+    section.page_height = Inches(8.5)
+    doc.add_heading('GMT ELECTRICAL SERVICES LTD – WEEKLY TIMESHEET', 0)
+    doc.add_paragraph(f'Week Beginning: {week_start.strftime("%d %B %Y")}')
+    doc.add_paragraph(f'Name:' f'{'_'*20}')
+    table = doc.add_table(rows=7, cols=8, style='Table Grid')
+    headers = ["DATE", "WORK SITE ADDRESS", "START", "FINISH", "LUNCH", "BASIC HRS", "O/T 1.5", "O/T 2.0"]
+    total_width = Inches(11)
+    column_width = total_width / len(headers)
+    for i, header in enumerate(headers):
+        cell = table.cell(0, i)
+        cell.width = column_width
+        cell.text = header
+    for i in range(1, 7):
+        row = table.rows[i]
+        set_row_height(row, Pt(46))
+        if i < 6:
+            day = week_start + timedelta(days=i-1)
+            row.cells[0].text = day.strftime("%a %d")
+    for row in table.rows:
+        for cell in row.cells:
+            cell.width = column_width
+    template_path = os.path.join(app.config['UPLOAD_FOLDER'], 'timesheet_template.docx')
+    doc.save(template_path)
+    return send_from_directory(app.config['UPLOAD_FOLDER'], 'timesheet_template.docx')
+
 def set_row_height(row, height):
-    """
-    Set the height of a row in the table.
-    """
     tr = row._tr
     trPr = tr.get_or_add_trPr()
     trHeight = OxmlElement('w:trHeight')
     trHeight.set(xml_qn('w:val'), str(height))
     trHeight.set(xml_qn('w:hRule'), "atLeast")
     trPr.append(trHeight)
-    
-def download_template():
-    doc = Document()
-    current_date = datetime.now()
-    week_start = current_date - timedelta(days=current_date.weekday())
 
-    section = doc.sections[0]
-    section.orientation = WD_ORIENTATION.LANDSCAPE
-    section.page_width = Inches(11)
-    section.page_height = Inches(8.5)
+def load_config():
+    global config
+    config_data = Config.query.all()
+    config = {item.name: item.value for item in config_data}
 
-    doc.add_heading('GMT ELECTRICAL SERVICES LTD – WEEKLY TIMESHEET', 0)
-    doc.add_paragraph(f'Week Beginning: {week_start.strftime("%d %B %Y")}')
-    doc.add_paragraph(f'Name:' f'{'_'*20}')
+def populate_config():
+    config_data = [
+        {'name': 'client_id', 'value': 'your_client_id'},
+        {'name': 'client_secret', 'value': 'your_client_secret'},
+        {'name': 'tenant_id', 'value': 'your_tenant_id'},
+        {'name': 'scope', 'value': 'your_scope'},
+        {'name': 'graph_api_endpoint', 'value': 'your_graph_api_endpoint'},
+        {'name': 'excel_file_path', 'value': 'your_excel_file_path'},
+    ]
+    for config_item in config_data:
+        existing_config = Config.query.filter_by(name=config_item['name']).first()
+        if existing_config is None:
+            new_config = Config(name=config_item['name'], value=config_item['value'])
+            db.session.add(new_config)
+    db.session.commit()
 
-    table = doc.add_table(rows=7, cols=8, style='Table Grid')
-    headers = ["DATE", "WORK SITE ADDRESS", "START", "FINISH", "LUNCH", "BASIC HRS", "O/T 1.5", "O/T 2.0"]
-
-    # Calculate column width
-    total_width = Inches(11)  # Page width
-    column_width = total_width / len(headers)
-    
-    for i, header in enumerate(headers):
-        cell = table.cell(0, i)
-        cell.width = column_width
-        cell.text = header
-
-    for i in range(1, 7):
-        row = table.rows[i]
-        set_row_height(row, Pt(46))  # Set row height to accommodate roughly four lines of text
-        if i < 6:
-            day = week_start + timedelta(days=i-1)
-            row.cells[0].text = day.strftime("%a %d")
-
-    # Ensure table spans full width
-    for row in table.rows:
-        for cell in row.cells:
-            cell.width = column_width
-
-    template_path = os.path.join(app.config['UPLOAD_FOLDER'], 'timesheet_template.docx')
-    doc.save(template_path)
-    return send_from_directory(app.config['UPLOAD_FOLDER'], 'timesheet_template.docx')
+# Register Blueprint
+app.register_blueprint(admin_bp, url_prefix='/admin')
 
 if __name__ == '__main__':
-    load_email_config()
+    with app.app_context():
+        db.create_all()
+        populate_config()
+        load_config()
+        load_email_config()
     app.run(debug=True)

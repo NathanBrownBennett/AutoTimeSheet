@@ -21,6 +21,13 @@
   </header>
 
   <main class="container mt-5">
+    <div class="card mb-5">
+      <div class="card-header">Actions</div>
+      <div class="card-body">
+        <a href="{{ url_for('admin.create_timesheet') }}" class="btn btn-primary">Create Timesheet</a>
+        <a href="{{ url_for('admin.create_job_card') }}" class="btn btn-primary">Create Job Card</a>
+      </div>
+    </div>
     <div class="card">
       <div class="card-header">Upload Timesheet</div>
       <div class="card-body">
@@ -59,14 +66,17 @@
     form.addEventListener('submit', (event) => {
       const file = fileInput.files[0];
       const acceptedExtensions = ['.docx', '.pdf'];
-      if (!acceptedExtensions.includes(file?.extension.toLowerCase())) {
+      if (file && !acceptedExtensions.includes(file.name.split('.').pop().toLowerCase())) {
         event.preventDefault();
         fileError.textContent = 'Invalid file format. Please upload a .docx or .pdf file.';
+        fileError.style.display = 'block';
+        uploadStatus.textContent = '';
+      } else {
+        fileError.textContent = '';
+        fileError.style.display = 'none';
         uploadStatus.textContent = 'Uploading...';
-    } else {
-      uploadStatus.textContent = ''; // Clear previous message
-    }
-  });
-</script>
+      }
+    });
+  </script>
 </body>
 </html>
