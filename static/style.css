@@ -6,6 +6,8 @@ body {
     padding: 20px;
     display: flex;
     justify-content: center;
+    background: linear-gradient(135deg, #3a3a3a, #4a148c); /* Dark background gradient */
+    color: white; /* Default text color is white */
 }
 
 .container {
@@ -14,16 +16,18 @@ body {
 }
 
 h1 {
-    color: #6a7ba2; /* Pastel blue for headers */
+    color: white; /* White color for headers */
     justify-content: center;
+    margin-bottom: 30px;
 }
 
 .nav-link {
-    color: #7692ff; /* Pastel link color */
+    color: white; /* White color for links */
 }
 
 form {
     background-color: #ffffff; /* White background for forms */
+    color: #333; /* Black text for forms */
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Subtle shadow for depth */
@@ -35,32 +39,46 @@ input[type="file"] {
 }
 
 .btn-primary {
-    background-color: #92a8d1; /* Pastel primary button */
+    background-color: #000000; /* Black primary button */
     border: none;
+    color: white; /* White text for buttons */
 }
 
 .btn-secondary {
-    background-color: #f9d5e5; /* Pastel secondary button */
+    background-color: #ffffff; /* White secondary button */
     border: none;
+    color: black; /* Black text for buttons */
 }
 
 .card {
-    background-color: #eef1f5; /* Light pastel background for cards */
+    background-color: #000000; /* Black background for cards */
+    color: white; /* White text for cards */
     margin-top: 20px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Subtle shadow for cards */
     border-radius: 8px;
+    border: 1px solid white; /* White border for cards */
+}
+
+.card.secondary {
+    background-color: #3a3a3a; /* Dark background for secondary cards */
+    color: white; /* White text for secondary cards */
 }
 
 .card-header {
-    margin-top: 20vh;
-    background-color: #b8c0d2; /* Slightly darker pastel for headers */
-    color: #ffffff;
+    background-color: #ffffff; /* White background for card headers */
+    color: black; /* Black text for card headers */
     border-radius: 8px 8px 0 0; /* Rounded corners at the top */
+    text-align: center;
+    margin-top: 20vh;
+}
+
+.card-body {
+    text-align: center;
 }
 
 footer {
     margin-top: 40px;
-    color: #6a7ba2; /* Pastel footer text */
+    color: #ffffff; /* White footer text */
     text-align: center;
     padding: 20px;
 }

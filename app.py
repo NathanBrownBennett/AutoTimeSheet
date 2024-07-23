@@ -16,8 +16,11 @@ from docx.shared import Inches, Pt
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn as xml_qn
 from flask_migrate import Migrate
+from flask_bcrypt import Bcrypt
 
 app = Flask(__name__)
+bcrypt = Bcrypt(app)
+
 app.config['STATIC_FOLDER'] = 'static'
 app.config['UPLOAD_FOLDER'] = 'timesheets'
 app.config['PROCESSED_FOLDER'] = 'json/daily'
@@ -41,6 +44,11 @@ os.makedirs(app.config['PROCESSED_FOLDER'], exist_ok=True)
 # Global variable to store config
 config = {}
 
+class Organisation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), unique=True, nullable=False)
+    logo = db.Column(db.String(150))
+    
 class Config(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), unique=True, nullable=False)
@@ -55,10 +63,12 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(64), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     role_id = db.Column(db.Integer, db.ForeignKey('role.id'))
+    organisation_id = db.Column(db.Integer, db.ForeignKey('organisation.id'))  # Ensure this is defined
     role = db.relationship('Role', backref=db.backref('users', lazy=True))
+    organisation = db.relationship('Organisation', backref=db.backref('employees', lazy=True))
 
     def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+        self.password_hash = generate_password_hash(password, method='pbkdf2:sha256')
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
@@ -69,6 +79,10 @@ class User(UserMixin, db.Model):
 
     def __repr__(self):
         return f'<User {self.username}>'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 class JobCard(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -119,6 +133,19 @@ def admin_dashboard():
 
     users = User.query.all()
     return render_template('admin.html', users=users)
+
+@app.route('/account_settings')
+@login_required
+def account_settings():
+    return render_template('account_settings.html')
+
+@app.route('/admin_dashboard')
+@login_required
+def admin_dashboard():
+    if not current_user.is_admin:
+        flash('Access denied.', 'danger')
+        return redirect(url_for('index'))
+    return render_template('admin_dashboard.html')
 
 @admin_bp.route('/create_job_card', methods=['GET', 'POST'])
 @login_required
@@ -235,20 +262,23 @@ def save_timesheet_data(timesheet_data, output_path):
         json.dump(timesheet_data, json_file, indent=4)
 
 @app.route('/', methods=['GET', 'POST'])
+@login_required
 def index():
     return render_template('index.html', title='Timesheet Processor')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
+        organisation_id = request.form.get('organisation')
         username = request.form.get('username')
         password = request.form.get('password')
-        user = User.query.filter_by(username=username).first()
-        if user and check_password_hash(user.password, password):
+        user = User.query.filter_by(username=username, organisation_id=organisation_id).first()
+        if user and user.check_password(password):
             login_user(user)
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('index'))
         flash('Login Unsuccessful. Please check username and password', 'danger')
-    return render_template('login.html')
+    organisations = Organisation.query.all()
+    return render_template('login.html', organisations=organisations)
 
 @app.route('/logout')
 @login_required
@@ -259,12 +289,16 @@ def logout():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
+        organisation_name = request.form.get('organisation_name')
         username = request.form.get('username')
-        email = request.form.get('email')
         password = request.form.get('password')
-        role = request.form.get('role')
-        hashed_password = generate_password_hash(password, method='sha256')
-        new_user = User(username=username, email=email, password=hashed_password, role=role)
+        organisation = Organisation.query.filter_by(name=organisation_name).first()
+        if not organisation:
+            organisation = Organisation(name=organisation_name)
+            db.session.add(organisation)
+            db.session.commit()
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+        new_user = User(username=username, password_hash=hashed_password, organisation_id=organisation.id)
         db.session.add(new_user)
         db.session.commit()
         flash('Account created successfully!', 'success')

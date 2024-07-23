@@ -8,15 +8,25 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evSXBKJEiCTixQwlq2q77hbpPEXBUdzwFyjwoUA7zJM2TpwUSL2gjT7jicSP3D" crossorigin="anonymous">
 </head>
 <body>
-  <a href="{{ url_for('login') }}">Login</a> | 
-  <a href="{{ url_for('register') }}">Register</a>
   <header class="container-fluid bg-light">
     <div class="container d-flex justify-content-between align-items-center py-3">
-      <h1>Timesheet Management</h1>
-      <nav class="nav">
-        <a class="nav-link" href="Customise.html">Customise</a>
-        <a class="nav-link" href="info.html">Information</a>
-      </nav>
+      {% if current_user.is_authenticated %}
+        <div>
+          <h1>{{ current_user.organisation.name if current_user.organisation else 'Your Organisation' }}</h1>
+          {% if current_user.organisation and current_user.organisation.logo %}
+            <img src="{{ url_for('static', filename='uploads/' + current_user.organisation.logo) }}" alt="Company Logo" style="height: 50px;">
+          {% else %}
+            <img src="{{ url_for('static', filename='default_logo.png') }}" alt="Company Logo" style="height: 50px;">
+          {% endif %}
+        </div>
+        <nav class="nav">
+          {% if current_user.is_admin %}
+            <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Manage Organisation</a>
+          {% endif %}
+          <a class="nav-link" href="{{ url_for('account_settings') }}">Account Settings</a>
+          <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+      {% endif %}
     </div>
   </header>
 
@@ -50,11 +60,10 @@
         <p>This feature is currently unavailable.</p>
       </div>
     </div>
+    <footer class="container-fluid text-center mt-5">
+      <p>&copy; 2024 Timesheet Management System - Nathan Brown-Bennett</p>
+    </footer>
   </main>
-
-  <footer class="container-fluid text-center mt-5">
-    <p>&copy; 2024 Timesheet Management System - Nathan Brown-Bennett</p>
-  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ٻVY84qeIWj8C2QgkqU8xDxbPpCQB5zWLXzn7+qzlUp+9CyqCoWZX9yWqD3+bA6T0" crossorigin="anonymous"></script>
   <script>
