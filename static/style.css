@@ -10,6 +10,24 @@ body {
     color: white; /* Default text color is white */
 }
 
+.nav-body {
+    height: auto;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    background-color: #000000; /* Black background for cards */
+    color: white; /* White text for cards */
+    margin-top: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Subtle shadow for cards */
+    border-radius: 8px;
+    border: 1px solid white; /* White border for cards */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px; /* Padding inside the card to ensure content is well-spaced */
+  }
+
 .container {
     max-width: 800px; /* Ensures content is centered and not too wide */
     justify-content: center;
@@ -57,6 +75,11 @@ input[type="file"] {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Subtle shadow for cards */
     border-radius: 8px;
     border: 1px solid white; /* White border for cards */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px; /* Padding inside the card to ensure content is well-spaced */
 }
 
 .card.secondary {
@@ -69,11 +92,21 @@ input[type="file"] {
     color: black; /* Black text for card headers */
     border-radius: 8px 8px 0 0; /* Rounded corners at the top */
     text-align: center;
-    margin-top: 20vh;
+    padding: 10px; /* Padding for the header to ensure it uses space neatly */
 }
 
 .card-body {
+    align-content: center;
     text-align: center;
+    padding: 10px; /* Padding for the body to ensure it uses space neatly */
+}
+
+.container-fluid text-center mt-5 {
+    margin-top: 5rem;
+    text-align: center;
+    box-shadow: 0px 500px 0px 500px #cccccc;
+    position: sticky;
+    top: 100%;
 }
 
 footer {

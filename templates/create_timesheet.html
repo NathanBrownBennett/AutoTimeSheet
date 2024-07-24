@@ -1,10 +1,35 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <title>Create Timesheet</title>
 </head>
+<header class="container-fluid bg-light">
+    <div class="container d-flex justify-content-between align-items-center py-3">
+      {% if current_user.is_authenticated %}
+        <div>
+          <h1>{{ current_user.organisation.name if current_user.organisation else 'Your Organisation' }}</h1>
+          {% if current_user.organisation and current_user.organisation.logo %}
+            <img src="{{ url_for('static', filename='uploads/' + current_user.organisation.logo) }}" alt="Company Logo" style="height: 50px;">
+          {% else %}
+            <img src="{{ url_for('static', filename='default_logo.png') }}" alt="Company Logo" style="height: 50px;">
+          {% endif %}
+        </div>
+        <nav class="nav">
+          {% if current_user.is_admin %}
+            <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Manage Organisation</a>
+          {% endif %}
+          <a class="nav-link" href="{{ url_for('account_settings') }}">Account Settings</a>
+          <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+      {% endif %}
+    </div>
+</header>
+
 <body>
     <h1>Create Timesheet</h1>
+    <main>
+        <br>
     <form method="POST" action="/create_timesheet">
         <label for="employee_name">Employee Name:</label>
         <input type="text" id="employee_name" name="employee_name" required>
@@ -32,5 +57,10 @@
         <input type="text" id="employee_id" name="employee_id" required>
         <button type="submit">Create Timesheet</button>
     </form>
+    <br>
+    </main>
 </body>
+<footer class="container-fluid text-center mt-5">
+    <p>&copy; 2024 Timesheet Management System - Nathan Brown-Bennett</p>
+  </footer>
 </html>

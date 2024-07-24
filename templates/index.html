@@ -1,91 +1,106 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Timesheet Management</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evSXBKJEiCTixQwlq2q77hbpPEXBUdzwFyjwoUA7zJM2TpwUSL2gjT7jicSP3D" crossorigin="anonymous">
-</head>
-<body>
-  <header class="container-fluid bg-light">
-    <div class="container d-flex justify-content-between align-items-center py-3">
-      {% if current_user.is_authenticated %}
-        <div>
-          <h1>{{ current_user.organisation.name if current_user.organisation else 'Your Organisation' }}</h1>
-          {% if current_user.organisation and current_user.organisation.logo %}
-            <img src="{{ url_for('static', filename='uploads/' + current_user.organisation.logo) }}" alt="Company Logo" style="height: 50px;">
-          {% else %}
-            <img src="{{ url_for('static', filename='default_logo.png') }}" alt="Company Logo" style="height: 50px;">
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Timesheet Management</title>
+      <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evSXBKJEiCTixQwlq2q77hbpPEXBUdzwFyjwoUA7zJM2TpwUSL2gjT7jicSP3D" crossorigin="anonymous">
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6nlK8I8Kiy1G+GYqD8f6sa4U5Uc7JsWE5FjC/+6EGmTukoCkfmh" crossorigin="anonymous"></script>
+    </head>
+  <body>
+    <header class="container-fluid bg-light">
+      <div class="nav-body">
+        <div class="container d-flex justify-content-between align-items-center py-3">
+          {% if current_user.is_authenticated %}
+          <div>
+            <h1>{{ current_user.organisation.name if current_user.organisation else 'Your Organisation' }}</h1>
+              {% if current_user.organisation and current_user.organisation.logo %}
+                <img src="{{ url_for('static', filename='uploads/' + current_user.organisation.logo) }}" alt="Company Logo"   style="height: 50px;">
+              {% else %}
+                <img src="{{ url_for('static', filename='default_logo.png') }}" alt="Company Logo" style="height: 50px;">
+              {% endif %}
+          </div>
+          <nav class="nav">
+            {% if current_user.is_admin %}
+              <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Manage Organisation</a>
+            {% endif %}
+              <a class="nav-link" href="{{ url_for('index') }}">Home Page</a>
+              <a class="nav-link" href="{{ url_for('account_settings') }}">Account Settings</a>
+              <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+              <a class="nav-link" href="{{ url_for('info') }}">Info</a>
+          </nav>
           {% endif %}
         </div>
-        <nav class="nav">
-          {% if current_user.is_admin %}
-            <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Manage Organisation</a>
-          {% endif %}
-          <a class="nav-link" href="{{ url_for('account_settings') }}">Account Settings</a>
-          <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
-        </nav>
-      {% endif %}
-    </div>
-  </header>
+      </div>
+    </header>
 
-  <main class="container mt-5">
-    <div class="card mb-5">
-      <div class="card-header">Actions</div>
-      <div class="card-body">
-        <a href="{{ url_for('admin.create_timesheet') }}" class="btn btn-primary">Create Timesheet</a>
-        <a href="{{ url_for('admin.create_job_card') }}" class="btn btn-primary">Create Job Card</a>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-header">Upload Timesheet</div>
-      <div class="card-body">
-        <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
-          <div class="mb-3">
-            <label for="timesheetFile" class="form-label">Drag and Drop Timesheet Here or</label>
-            <input class="form-control" type="file" id="timesheetFile" name="file" accept=".docx,.pdf">
-            <div id="fileError" class="invalid-feedback"></div>
+    <main class="container mt-5">
+      <div class="card mb-5">
+        <div class="card-header">Actions</div>
+          <div class="card-body">
+            <a href="{{ url_for('admin.create_timesheet') }}" class="btn btn-primary">Create Timesheet</a>
+            <a href="{{ url_for('admin.create_job_card') }}" class="btn btn-primary">Create Job Card</a>
           </div>
-          <button type="submit" class="btn btn-primary">Upload</button>
-          <span id="uploadStatus" class="text-muted"></span>
-        </form>
-        <br>
-        <a href="/download_template" class="btn btn-secondary">Download Timesheet Template</a>
+        </div>
       </div>
-    </div>
-    <div class="card mt-5">
-      <div class="card-header">Recent Uploads</div>
-      <div class="card-body">
-        <p>This feature is currently unavailable.</p>
+
+      <div class="card">
+        <div class="card-header">Upload Timesheet</div>
+          <div class="card-body">
+            <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+              <div class="mb-3">
+                <label for="timesheetFile" class="form-label">Drag and Drop Timesheet Here or</label>
+                <input class="form-control" type="file" id="timesheetFile" name="file" accept=".docx,.pdf">
+                <div id="fileError" class="invalid-feedback"></div>
+              </div>
+              <button type="submit" class="btn btn-primary">Upload</button>
+              <span id="uploadStatus" class="text-muted"></span>
+            </form>
+            <br>
+            <a href="/download_template" class="btn btn-secondary">Download Timesheet Template</a>
+          </div>
+        </div>
       </div>
-    </div>
+
+      <div class="card mt-5">
+        <div class="card-header">Recent Uploads</div>
+          <div class="card-body">
+            <p>This feature is currently unavailable.</p>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <script>
+      const form = document.getElementById('uploadForm');
+      const fileInput = document.getElementById('timesheetFile');
+      const fileError = document.getElementById('fileError');
+      const uploadStatus = document.getElementById('uploadStatus');
+
+      form.addEventListener('submit', (event) => {
+        const file = fileInput.files[0];
+        const acceptedExtensions = ['docx', 'pdf'];
+        if (file && !acceptedExtensions.includes(file.name.split('.').pop().toLowerCase())) {
+          event.preventDefault();
+          fileError.textContent = 'Invalid file format. Please upload a .docx or .pdf file.';
+          fileError.style.display = 'block';
+          uploadStatus.textContent = '';
+        } else {
+          fileError.textContent = '';
+          fileError.style.display = 'none';
+          uploadStatus.textContent = 'Uploading...';
+        }
+      });
+    </script>
+  </body>
+
+  <div>
+    <br>
     <footer class="container-fluid text-center mt-5">
       <p>&copy; 2024 Timesheet Management System - Nathan Brown-Bennett</p>
     </footer>
-  </main>
+  </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ٻVY84qeIWj8C2QgkqU8xDxbPpCQB5zWLXzn7+qzlUp+9CyqCoWZX9yWqD3+bA6T0" crossorigin="anonymous"></script>
-  <script>
-    const form = document.getElementById('uploadForm');
-    const fileInput = document.getElementById('timesheetFile');
-    const fileError = document.getElementById('fileError');
-    const uploadStatus = document.getElementById('uploadStatus');
-
-    form.addEventListener('submit', (event) => {
-      const file = fileInput.files[0];
-      const acceptedExtensions = ['.docx', '.pdf'];
-      if (file && !acceptedExtensions.includes(file.name.split('.').pop().toLowerCase())) {
-        event.preventDefault();
-        fileError.textContent = 'Invalid file format. Please upload a .docx or .pdf file.';
-        fileError.style.display = 'block';
-        uploadStatus.textContent = '';
-      } else {
-        fileError.textContent = '';
-        fileError.style.display = 'none';
-        uploadStatus.textContent = 'Uploading...';
-      }
-    });
-  </script>
-</body>
 </html>

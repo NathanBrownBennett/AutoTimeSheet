@@ -48,7 +48,7 @@ class Organisation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(150), unique=True, nullable=False)
     logo = db.Column(db.String(150))
-    
+
 class Config(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), unique=True, nullable=False)
@@ -63,7 +63,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(64), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     role_id = db.Column(db.Integer, db.ForeignKey('role.id'))
-    organisation_id = db.Column(db.Integer, db.ForeignKey('organisation.id'))  # Ensure this is defined
+    organisation_id = db.Column(db.Integer, db.ForeignKey('organisation.id'))
     role = db.relationship('Role', backref=db.backref('users', lazy=True))
     organisation = db.relationship('Organisation', backref=db.backref('employees', lazy=True))
 
@@ -139,9 +139,26 @@ def admin_dashboard():
 def account_settings():
     return render_template('account_settings.html')
 
+@app.route('/update_account_settings', methods=['POST'])
+@login_required
+def update_account_settings():
+    username = request.form.get('username')
+    password = request.form.get('password')
+    
+    # Update username
+    current_user.username = username
+    
+    # Update password if provided
+    if password:
+        current_user.set_password(password)
+    
+    db.session.commit()
+    flash('Account settings updated successfully!', 'success')
+    return redirect(url_for('account_settings'))
+
 @app.route('/admin_dashboard')
 @login_required
-def admin_dashboard():
+def admin_dashboard_view():
     if not current_user.is_admin:
         flash('Access denied.', 'danger')
         return redirect(url_for('index'))
@@ -284,7 +301,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('index'))
+    return redirect(url_for('login'))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -330,7 +347,14 @@ def upload_file():
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
-        new_timesheet = Timesheet(filename=filename, filepath=filepath, user_id=current_user.id)
+        new_timesheet = Timesheet(
+            filename=filename,
+            filepath=filepath,
+            user_id=current_user.id,
+            week_start=datetime.now(),
+            date_commencing=datetime.now(),
+            hours_worked=0
+        )
         db.session.add(new_timesheet)
         db.session.commit()
         return redirect(url_for('dashboard'))
@@ -419,7 +443,7 @@ def update_excel_file(filepath):
             print(f"Failed to update cell {update['range']}. Status code: {response.status_code}")
             return
     print("Excel sheet updated successfully.")
-    
+
 def send_approval_email(user_id):
     user = User.query.get(user_id)
     msg = Message("Timesheet Approved", recipients=[user.email])

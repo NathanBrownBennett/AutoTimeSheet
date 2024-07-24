@@ -9,14 +9,31 @@
 </head>
 <body>
     <header class="container-fluid bg-light">
-        <div class="container d-flex justify-content-between align-items-center py-3">
-            <h1>Application Information</h1>
+        <div class="nav-body">
+          <div class="container d-flex justify-content-between align-items-center py-3">
+            {% if current_user.is_authenticated %}
+            <div>
+              <h1>{{ current_user.organisation.name if current_user.organisation else 'Your Organisation' }}</h1>
+                {% if current_user.organisation and current_user.organisation.logo %}
+                  <img src="{{ url_for('static', filename='uploads/' + current_user.organisation.logo) }}" alt="Company Logo"   style="height: 50px;">
+                {% else %}
+                  <img src="{{ url_for('static', filename='default_logo.png') }}" alt="Company Logo" style="height: 50px;">
+                {% endif %}
+            </div>
             <nav class="nav">
-                <a class="nav-link" href="/">Home</a>
-                <a class="nav-link" href="Customise.html">Customise</a>
+              {% if current_user.is_admin %}
+                <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Manage Organisation</a>
+              {% endif %}
+                <a class="nav-link" href="{{ url_for('index') }}">Home Page</a>
+                <a class="nav-link" href="{{ url_for('account_settings') }}">Account Settings</a>
+                <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                <a class="nav-link" href="{{ url_for('info') }}">Info</a>
             </nav>
+            {% endif %}
+          </div>
         </div>
-    </header>
+      </header>
+    
     <main class="container mt-5">
         <div class="card">
             <div class="card-header">Developer Information</div>
@@ -32,6 +49,12 @@
                     <li>Timesheet Data Extraction</li>
                     <li>Download Timesheet Template</li>
                     <li>Basic Site Customization Options</li>
+                    <li>Basic User Management</li>
+                    <li>Basic Timesheet Approval System</li>
+                    <li>Basic Timesheet Upload System</li>
+                    <li>Job Card Data Extraction</li>
+                    <li>Basic Job Card Creation System</li>
+                    <li>Logins and Account Creation</li>
                 </ul>
                 <h5>Features in Progress:</h5>
                 <ul>

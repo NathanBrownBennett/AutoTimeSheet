@@ -1,15 +1,9 @@
-from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, UserMixin
+from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-import datetime
+from app import db
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-db = SQLAlchemy(app)
-login_manager = LoginManager(app)
-login_manager.login_view = 'login'
+db = SQLAlchemy()
 
 class Organisation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -25,7 +19,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(64), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     role_id = db.Column(db.Integer, db.ForeignKey('role.id'))
-    organisation_id = db.Column(db.Integer, db.ForeignKey('organisation.id'))  # Ensure this is defined
+    organisation_id = db.Column(db.Integer, db.ForeignKey('organisation.id'))
     role = db.relationship('Role', backref=db.backref('users', lazy=True))
     organisation = db.relationship('Organisation', backref=db.backref('employees', lazy=True))
 
@@ -42,10 +36,17 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return f'<User {self.username}>'
 
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
-
+class Timesheet(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(150), nullable=False)
+    filepath = db.Column(db.String(150), nullable=False)
+    week_start = db.Column(db.Date, nullable=False)
+    date_commencing = db.Column(db.Date, nullable=False)
+    hours_worked = db.Column(db.Float, nullable=False)
+    upload_time = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
+    user = db.relationship('User', backref=db.backref('timesheets', lazy=True))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    approved = db.Column(db.Boolean, default=False)
 
 class JobCard(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -59,21 +60,3 @@ class JobCard(db.Model):
     duration = db.Column(db.Float, nullable=False)
     picture = db.Column(db.String(100))
     video = db.Column(db.String(100))
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-
-class Timesheet(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    week_start = db.Column(db.Date, nullable=False)
-    mon_hours = db.Column(db.Float, default=0.0)
-    tue_hours = db.Column(db.Float, default=0.0)
-    wed_hours = db.Column(db.Float, default=0.0)
-    thu_hours = db.Column(db.Float, default=0.0)
-    fri_hours = db.Column(db.Float, default=0.0)
-    sat_hours = db.Column(db.Float, default=0.0)
-    sun_hours = db.Column(db.Float, default=0.0)
-    total_hours = db.Column(db.Float, default=0.0)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-
-    def calculate_total_hours(self):
-        self.total_hours = self.mon_hours + self.tue_hours + self.wed_hours + self.thu_hours + self.fri_hours
