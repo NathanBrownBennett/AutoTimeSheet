@@ -66,6 +66,14 @@ class User(UserMixin, db.Model):
     organisation_id = db.Column(db.Integer, db.ForeignKey('organisation.id'))
     role = db.relationship('Role', backref=db.backref('users', lazy=True))
     organisation = db.relationship('Organisation', backref=db.backref('employees', lazy=True))
+    
+class Task(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.String(500))
+    status = db.Column(db.String(50), nullable=False, default='to-do')
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', backref=db.backref('tasks', lazy=True))
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password, method='pbkdf2:sha256')
@@ -304,7 +312,12 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/register', methods=['GET', 'POST'])
+@login_required
 def register():
+    if not current_user.is_admin:
+        flash('Access denied.', 'danger')
+        return redirect(url_for('index'))
+
     if request.method == 'POST':
         organisation_name = request.form.get('organisation_name')
         username = request.form.get('username')
@@ -318,8 +331,14 @@ def register():
         new_user = User(username=username, password_hash=hashed_password, organisation_id=organisation.id)
         db.session.add(new_user)
         db.session.commit()
-        flash('Account created successfully!', 'success')
-        return redirect(url_for('login'))
+
+        # Send email with user details
+        msg = Message('New Account Created', recipients=[new_user.email])
+        msg.body = f'Username: {username}\nPassword: {password}'
+        mail.send(msg)
+
+        flash('Account created successfully and email sent!', 'success')
+        return redirect(url_for('index'))
     return render_template('register.html')
 
 @app.route('/dashboard')
@@ -450,6 +469,52 @@ def send_approval_email(user_id):
     msg.body = "Your timesheet has been approved and updated."
     mail.send(msg)
 
+@app.route('/create_task', methods=['POST'])
+@login_required
+def create_task():
+    title = request.form.get('title')
+    description = request.form.get('description')
+    task = Task(title=title, description=description, user_id=current_user.id)
+    db.session.add(task)
+    db.session.commit()
+    return jsonify({'success': True})
+
+@app.route('/update_task/<int:task_id>', methods=['POST'])
+@login_required
+def update_task(task_id):
+    task = Task.query.get(task_id)
+    if task.user_id != current_user.id and not current_user.is_admin:
+        return jsonify({'error': 'Access denied.'}), 403
+    task.status = request.form.get('status')
+    db.session.commit()
+    return jsonify({'success': True})
+
+@app.route('/delete_task/<int:task_id>', methods=['POST'])
+@login_required
+def delete_task(task_id):
+    task = Task.query.get(task_id)
+    if task.user_id != current_user.id and not current_user.is_admin:
+        return jsonify({'error': 'Access denied.'}), 403
+    db.session.delete(task)
+    db.session.commit()
+    return jsonify({'success': True})
+
+
+@app.route('/get_timesheet_events')
+@login_required
+def get_timesheet_events():
+    timesheets = Timesheet.query.filter_by(user_id=current_user.id).all()
+    events = []
+    for timesheet in timesheets:
+        events.append({
+            'title': 'Worked Hours',
+            'start': timesheet.week_start,
+            'end': timesheet.week_start + timedelta(days=5),  # Assuming a 5-day work week
+            'hours': timesheet.hours_worked
+        })
+    return jsonify(events)
+
+
 @app.route('/download_template')
 def download_template():
     doc = Document()
@@ -512,7 +577,6 @@ def populate_config():
             db.session.add(new_config)
     db.session.commit()
 
-# Register Blueprint
 app.register_blueprint(admin_bp, url_prefix='/admin')
 
 if __name__ == '__main__':

@@ -27,38 +27,42 @@
 </header>
 
 <body>
-    <h1>Create Timesheet</h1>
-    <main>
+  <div class="centered-container">
+    <div class="form-container">
+      <h1>Create Timesheet</h1>
+      <main>
         <br>
-    <form method="POST" action="/create_timesheet">
-        <label for="employee_name">Employee Name:</label>
-        <input type="text" id="employee_name" name="employee_name" required>
-        <label for="week_start">Week Starting:</label>
-        <input type="date" id="week_start" name="week_start" required>
-        <label for="monday_hours">Monday Hours:</label>
-        <input type="number" step="0.1" id="monday_hours" name="monday_hours" required>
-        <label for="tuesday_hours">Tuesday Hours:</label>
-        <input type="number" step="0.1" id="tuesday_hours" name="tuesday_hours" required>
-        <label for="wednesday_hours">Wednesday Hours:</label>
-        <input type="number" step="0.1" id="wednesday_hours" name="wednesday_hours" required>
-        <label for="thursday_hours">Thursday Hours:</label>
-        <input type="number" step="0.1" id="thursday_hours" name="thursday_hours" required>
-        <label for="friday_hours">Friday Hours:</label>
-        <input type="number" step="0.1" id="friday_hours" name="friday_hours" required>
-        <label for="saturday_hours">Saturday Hours:</label>
-        <input type="number" step="0.1" id="saturday_hours" name="saturday_hours" required>
-        <label for="sunday_hours">Sunday Hours:</label>
-        <input type="number" step="0.1" id="sunday_hours" name="sunday_hours" required>
-        <label for="total_hours">Total Hours:</label>
-        <input type="number" step="0.1" id="total_hours" name="total_hours" required>
-        <label for="job_card_id">Job Card ID:</label>
-        <input type="text" id="job_card_id" name="job_card_id" required>
-        <label for="employee_id">Employee ID:</label>
-        <input type="text" id="employee_id" name="employee_id" required>
-        <button type="submit">Create Timesheet</button>
-    </form>
-    <br>
-    </main>
+          <form method="POST" action="/create_timesheet">
+              <label for="employee_name">Employee Name:</label>
+              <input type="text" id="employee_name" name="employee_name" required>
+              <label for="week_start">Week Starting:</label>
+              <input type="date" id="week_start" name="week_start" required>
+              <label for="monday_hours">Monday Hours:</label>
+              <input type="number" step="0.1" id="monday_hours" name="monday_hours" required>
+              <label for="tuesday_hours">Tuesday Hours:</label>
+              <input type="number" step="0.1" id="tuesday_hours" name="tuesday_hours" required>
+              <label for="wednesday_hours">Wednesday Hours:</label>
+              <input type="number" step="0.1" id="wednesday_hours" name="wednesday_hours" required>
+              <label for="thursday_hours">Thursday Hours:</label>
+              <input type="number" step="0.1" id="thursday_hours" name="thursday_hours" required>
+              <label for="friday_hours">Friday Hours:</label>
+              <input type="number" step="0.1" id="friday_hours" name="friday_hours" required>
+              <label for="saturday_hours">Saturday Hours:</label>
+              <input type="number" step="0.1" id="saturday_hours" name="saturday_hours" required>
+              <label for="sunday_hours">Sunday Hours:</label>
+              <input type="number" step="0.1" id="sunday_hours" name="sunday_hours" required>
+              <label for="total_hours">Total Hours:</label>
+              <input type="number" step="0.1" id="total_hours" name="total_hours" required>
+              <label for="job_card_id">Job Card ID:</label>
+              <input type="text" id="job_card_id" name="job_card_id" required>
+              <label for="employee_id">Employee ID:</label>
+              <input type="text" id="employee_id" name="employee_id" required>
+              <button type="submit">Create Timesheet</button>
+          </form>
+        <br>
+      </main>
+    </div>
+  </div>
 </body>
 <footer class="container-fluid text-center mt-5">
     <p>&copy; 2024 Timesheet Management System - Nathan Brown-Bennett</p>

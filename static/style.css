@@ -10,6 +10,23 @@ body {
     color: white; /* Default text color is white */
 }
 
+centered-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.form-container {
+    width: 100%;
+    max-width: 500px; 
+    padding: 20px;
+    background-color: #ffffff;
+    color: #333; 
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
 .nav-body {
     height: auto;
     display: flex;
@@ -55,6 +72,34 @@ form {
 input[type="file"] {
     border: 2px dashed #92a8d1; /* Dashed border for file input */
 }
+
+#job-board {
+    display: flex;
+    justify-content: space-between;
+}
+
+.job-column {
+    flex: 1;
+    margin: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    min-height: 300px;
+    background-color: #000000;
+}
+
+.job-column h2 {
+    text-align: center;
+}
+
+.job-task {
+    padding: 10px;
+    margin: 10px 0;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    cursor: move;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
 
 .btn-primary {
     background-color: #000000; /* Black primary button */
