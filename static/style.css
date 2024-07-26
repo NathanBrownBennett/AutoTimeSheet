@@ -10,42 +10,6 @@ body {
     color: white; /* Default text color is white */
 }
 
-centered-container {
-    filter: blur(1.5rem);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-}
-
-.form-container {
-    width: 100%;
-    max-width: 500px; 
-    padding: 20px;
-    background-color: #ffffff;
-    color: #333; 
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-.nav-body {
-    height: auto;
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-    background-color: #000000; /* Black background for cards */
-    color: white; /* White text for cards */
-    margin-top: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Subtle shadow for cards */
-    border-radius: 8px;
-    border: 1px solid white; /* White border for cards */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 20px; /* Padding inside the card to ensure content is well-spaced */
-  }
-
 .container {
     max-width: 800px; /* Ensures content is centered and not too wide */
     justify-content: center;
@@ -74,34 +38,6 @@ input[type="file"] {
     border: 2px dashed #92a8d1; /* Dashed border for file input */
 }
 
-#job-board {
-    display: flex;
-    justify-content: space-between;
-}
-
-.job-column {
-    flex: 1;
-    margin: 10px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    min-height: 300px;
-    background-color: #000000;
-}
-
-.job-column h2 {
-    text-align: center;
-}
-
-.job-task {
-    padding: 10px;
-    margin: 10px 0;
-    background-color: #fff;
-    border: 1px solid #ccc;
-    cursor: move;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-
 .btn-primary {
     background-color: #000000; /* Black primary button */
     border: none;
@@ -114,6 +50,16 @@ input[type="file"] {
     color: black; /* Black text for buttons */
 }
 
+.nav-body {
+    background-color: #000000; /* White background for nav */
+    color: black; /* Black text for nav */
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Subtle shadow for depth */
+    margin-top: 20px;
+    outline: oldlace;
+}
+
 .card {
     background-color: #000000; /* Black background for cards */
     color: white; /* White text for cards */
@@ -121,11 +67,6 @@ input[type="file"] {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Subtle shadow for cards */
     border-radius: 8px;
     border: 1px solid white; /* White border for cards */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 20px; /* Padding inside the card to ensure content is well-spaced */
 }
 
 .card.secondary {
@@ -138,27 +79,155 @@ input[type="file"] {
     color: black; /* Black text for card headers */
     border-radius: 8px 8px 0 0; /* Rounded corners at the top */
     text-align: center;
-    padding: 10px; /* Padding for the header to ensure it uses space neatly */
+    margin-top: 20vh;
 }
 
 .card-body {
     align-content: center;
     text-align: center;
-    padding: 10px; /* Padding for the body to ensure it uses space neatly */
-}
-
-.container-fluid text-center mt-5 {
-    margin-top: 5rem;
-    text-align: center;
-    box-shadow: 0px 500px 0px 500px #cccccc;
-    position: sticky;
-    top: 100%;
 }
 
 footer {
-    filter: blur(1.5rem);
     margin-top: 40px;
     color: #ffffff; /* White footer text */
     text-align: center;
     padding: 20px;
+}
+
+.wave-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 400px;
+    padding-top: 100px;
+    background: #3c31dd;
+}
+
+.curve {
+    position: absolute;
+    height: 250px;
+    width: 100%;
+    bottom: 0;
+    text-align: center;
+}
+
+.curve::before {
+    content: '';
+    display: block;
+    position: absolute;
+    border-radius: 100% 50%;
+    width: 55%;
+    height: 100%;
+    transform: translate(85%, 60%);
+    background-color: hsl(216, 21%, 16%);
+}
+
+.curve::after {
+    content: '';
+    display: block;
+    position: absolute;
+    border-radius: 100% 50%;
+    width: 55%;
+    height: 100%;
+    background-color: #3c31dd;
+    transform: translate(-4%, 40%);
+    z-index: -1;
+}
+
+.task-board {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.board-column {
+    background: #ffffff;
+    color: #333;
+    border-radius: 8px;
+    padding: 10px;
+    width: 30%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.board-column h3 {
+    text-align: center;
+}
+
+.task-list {
+    min-height: 200px;
+}
+
+.task {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+    cursor: move;
+    position: relative;
+}
+
+.task:hover {
+    animation: wobble 0.5s;
+}
+
+@keyframes wobble {
+    0% { transform: rotate(0deg); }
+    25% { transform: rotate(3deg); }
+    50% { transform: rotate(-3deg); }
+    75% { transform: rotate(1.5deg); }
+    100% { transform: rotate(0deg); }
+}
+
+.button {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+.button:hover {
+    background-color: #0056b3;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    padding-top: 100px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 500px;
+    border-radius: 8px;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
 }

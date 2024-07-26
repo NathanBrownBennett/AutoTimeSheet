@@ -33,10 +33,10 @@
           {% if current_user.is_admin %}
             <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Manage Organisation</a>
           {% endif %}
-          <a class="nav-link" href="{{ url_for('index') }}">Home Page</a>
-          <a class="nav-link" href="{{ url_for('account_settings') }}">Account Settings</a>
-          <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
-          <a class="nav-link" href="{{ url_for('info') }}">Info</a>
+          <a class="nav-link" href="{{ url_for('main.index') }}">Home Page</a>
+          <a class="nav-link" href="{{ url_for('account.account_settings') }}">Account Settings</a>
+          <a class="nav-link" href="{{ url_for('account.logout') }}">Logout</a>
+          <a class="nav-link" href="{{ url_for('main.info') }}">Info</a>
         </nav>
         {% endif %}
       </div>
@@ -101,10 +101,22 @@
             <!-- Completed tasks will be added here -->
           </div>
         </div>
-        <button class="btn btn-primary" id="create-task-btn">Create Task</button>
+        <a href="#" class="btn btn-primary" id="create-task-btn">Create Task</a>
+        <a href="#" class="btn btn-primary" id="delete-task-btn">Delete Task</a>
       </div>
     </div>
   </main>
+
+  <div id="task-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <form id="task-form">
+        <label for="task-message">Task Message:</label>
+        <textarea id="task-message" name="task-message" required></textarea>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </form>
+    </div>
+  </div>
 
   <script>
     $(document).ready(function() {
@@ -163,89 +175,88 @@
           });
         }
       });
-    });
 
-    interact('.job-task').draggable({
-      inertia: true,
-      autoScroll: true,
-      onmove: dragMoveListener,
-      onend: function(event) {
-        var textEl = event.target.querySelector('p');
-        textEl && (textEl.textContent =
-          'moved a distance of ' +
-          (Math.sqrt(Math.pow(event.pageX - event.x0, 2) +
-            Math.pow(event.pageY - event.y0, 2) | 0))
-            .toFixed(2) + 'px');
+      $('#delete-task-btn').click(function() {
+        // Functionality to delete a task
+      });
+
+      interact('.job-task').draggable({
+        inertia: true,
+        autoScroll: true,
+        onmove: dragMoveListener,
+        onend: function(event) {
+          var textEl = event.target.querySelector('p');
+          textEl && (textEl.textContent =
+            'moved a distance of ' +
+            (Math.sqrt(Math.pow(event.pageX - event.x0, 2) +
+              Math.pow(event.pageY - event.y0, 2) | 0))
+              .toFixed(2) + 'px');
+        }
+      });
+
+      function dragMoveListener(event) {
+        var target = event.target,
+          x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx,
+          y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+        target.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+
+        target.setAttribute('data-x', x);
+        target.setAttribute('data-y', y);
       }
-    });
 
-    function dragMoveListener(event) {
-      var target = event.target,
-        x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx,
-        y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+      interact('.job-column').dropzone({
+        accept: '.job-task',
+        overlap: 0.5,
+        ondropactivate: function(event) {
+          event.target.classList.add('drop-active');
+        },
+        ondragenter: function(event) {
+          var draggableElement = event.relatedTarget,
+            dropzoneElement = event.target;
 
-      target.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+          dropzoneElement.classList.add('drop-target');
+          draggableElement.classList.add('can-drop');
+          draggableElement.textContent = 'Dragged in';
+        },
+        ondragleave: function(event) {
+          event.target.classList.remove('drop-target');
+          event.relatedTarget.classList.remove('can-drop');
+          event.relatedTarget.textContent = 'Dragged out';
+        },
+        ondrop: function(event) {
+          event.relatedTarget.textContent = 'Dropped';
+        },
+        ondropdeactivate: function(event) {
+          event.target.classList.remove('drop-active');
+          event.target.classList.remove('drop-target');
+        }
+      });
 
-      target.setAttribute('data-x', x);
-      target.setAttribute('data-y', y);
-    }
+      const form = document.getElementById('uploadForm');
+      const fileInput = document.getElementById('timesheetFile');
+      const fileError = document.getElementById('fileError');
+      const uploadStatus = document.getElementById('uploadStatus');
 
-    interact('.job-column').dropzone({
-      accept: '.job-task',
-      overlap: 0.5,
-      ondropactivate: function(event) {
-        event.target.classList.add('drop-active');
-      },
-      ondragenter: function(event) {
-        var draggableElement = event.relatedTarget,
-          dropzoneElement = event.target;
-
-        dropzoneElement.classList.add('drop-target');
-        draggableElement.classList.add('can-drop');
-        draggableElement.textContent = 'Dragged in';
-      },
-      ondragleave: function(event) {
-        event.target.classList.remove('drop-target');
-        event.relatedTarget.classList.remove('can-drop');
-        event.relatedTarget.textContent = 'Dragged out';
-      },
-      ondrop: function(event) {
-        event.relatedTarget.textContent = 'Dropped';
-      },
-      ondropdeactivate: function(event) {
-        event.target.classList.remove('drop-active');
-        event.target.classList.remove('drop-target');
-      }
+      form.addEventListener('submit', (event) => {
+        const file = fileInput.files[0];
+        const acceptedExtensions = ['docx', 'pdf'];
+        if (file && !acceptedExtensions.includes(file.name.split('.').pop().toLowerCase())) {
+          event.preventDefault();
+          fileError.textContent = 'Invalid file format. Please upload a .docx or .pdf file.';
+          fileError.style.display = 'block';
+          uploadStatus.textContent = '';
+        } else {
+          fileError.textContent = '';
+          fileError.style.display = 'none';
+          uploadStatus.textContent = 'Uploading...';
+        }
+      });
     });
   </script>
 
-  <script>
-    const form = document.getElementById('uploadForm');
-    const fileInput = document.getElementById('timesheetFile');
-    const fileError = document.getElementById('fileError');
-    const uploadStatus = document.getElementById('uploadStatus');
-
-    form.addEventListener('submit', (event) => {
-      const file = fileInput.files[0];
-      const acceptedExtensions = ['docx', 'pdf'];
-      if (file && !acceptedExtensions.includes(file.name.split('.').pop().toLowerCase())) {
-        event.preventDefault();
-        fileError.textContent = 'Invalid file format. Please upload a .docx or .pdf file.';
-        fileError.style.display = 'block';
-        uploadStatus.textContent = '';
-      } else {
-        fileError.textContent = '';
-        fileError.style.display = 'none';
-        uploadStatus.textContent = 'Uploading...';
-      }
-    });
-  </script>
-
-  <div>
-    <br>
-    <footer class="container-fluid text-center mt-5">
-      <p>&copy; 2024 Buisness Productivity Optimisation App - Nathan Brown-Bennett</p>
-    </footer>
-  </div>
+  <footer class="container-fluid text-center mt-5">
+    <p>&copy; 2024 Business Productivity Optimisation App - Nathan Brown-Bennett</p>
+  </footer>
 </body>
 </html>
