@@ -1,27 +1,156 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Account Settings</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evSXBKJEiCTixQwlq2q77hbpPEXBUdzwFyjwoUA7zJM2TpwUSL2gjT7jicSP3D" crossorigin="anonymous">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Settings</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evSXBKJEiCTixQwlq2q77hbpPEXBUdzwFyjwoUA7zJM2TpwUSL2gjT7jicSP3D" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6nlK8I8Kiy1G+GYqD8f6sa4U5Uc7JsWE5FjC/+6EGmTukoCkfmh" crossorigin="anonymous"></script>
 </head>
 <body>
-    <div class="container mt-5">
-        <h1>Account Settings</h1>
-        <form action="{{ url_for('update_account_settings') }}" method="POST">
-            <div class="mb-3">
-                <label for="username" class="form-label">Username</label>
-                <input type="text" class="form-control" id="username" name="username" value="{{ current_user.username }}" required>
-            </div>
-            <div class="mb-3">
-                <label for="password" class="form-label">New Password</label>
-                <input type="password" class="form-control" id="password" name="password">
-            </div>
-            <button type="submit" class="btn btn-primary">Update Account</button>
-        </form>
+  <div class="container mt-5">
+    <h1>Account Settings</h1>
+    
+    {% if current_user.is_admin %}
+    <h2>Manage Employees</h2>
+    <div class="mb-4">
+      <button class="btn btn-primary" id="create-employee-btn">Create Employee</button>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6nlK8I8Kiy1G+GYqD8f6sa4U5Uc7JsWE5FjC/+6EGmTukoCkfmh" crossorigin="anonymous"></script>
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr>
+          <td>{{ user.username }}</td>
+          <td>{{ user.email }}</td>
+          <td>{{ user.role.name }}</td>
+          <td>
+            <button class="btn btn-warning btn-sm edit-btn" data-id="{{ user.id }}">Edit</button>
+            <button class="btn btn-danger btn-sm delete-btn" data-id="{{ user.id }}">Delete</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h2>Company Settings</h2>
+    <form id="company-logo-form" action="{{ url_for('upload_company_logo') }}" method="post" enctype="multipart/form-data">
+      <div class="mb-3">
+        <label for="companyLogo" class="form-label">Upload Company Logo</label>
+        <input class="form-control" type="file" id="companyLogo" name="company_logo" accept="image/*">
+      </div>
+      <button type="submit" class="btn btn-primary">Upload Logo</button>
+    </form>
+
+    <form id="company-name-form" action="{{ url_for('request_company_name_change') }}" method="post">
+      <div class="mb-3">
+        <label for="companyName" class="form-label">Request Company Name Change</label>
+        <input class="form-control" type="text" id="companyName" name="company_name" placeholder="Enter new company name">
+      </div>
+      <button type="submit" class="btn btn-primary">Request Name Change</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <!-- Modals -->
+  <div class="modal fade" id="createEmployeeModal" tabindex="-1" aria-labelledby="createEmployeeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="createEmployeeModalLabel">Create Employee</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="create-employee-form">
+            <div class="mb-3">
+              <label for="employeeUsername" class="form-label">Username</label>
+              <input type="text" class="form-control" id="employeeUsername" required>
+            </div>
+            <div class="mb-3">
+              <label for="employeeEmail" class="form-label">Email</label>
+              <input type="email" class="form-control" id="employeeEmail" required>
+            </div>
+            <div class="mb-3">
+              <label for="employeePassword" class="form-label">Password</label>
+              <input type="password" class="form-control" id="employeePassword" required>
+            </div>
+            <div class="mb-3">
+              <label for="employeeRole" class="form-label">Role</label>
+              <select class="form-control" id="employeeRole" required>
+                <option value="employee">Employee</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Create</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('create-employee-btn').addEventListener('click', function() {
+      new bootstrap.Modal(document.getElementById('createEmployeeModal')).show();
+    });
+
+    document.getElementById('create-employee-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const username = document.getElementById('employeeUsername').value;
+      const email = document.getElementById('employeeEmail').value;
+      const password = document.getElementById('employeePassword').value;
+      const role = document.getElementById('employeeRole').value;
+      
+      fetch('{{ url_for("create_employee") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, email, password, role })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          location.reload();
+        } else {
+          alert('Failed to create employee.');
+        }
+      });
+    });
+
+    document.querySelectorAll('.edit-btn').forEach(button => {
+      button.addEventListener('click', function() {
+        const userId = this.getAttribute('data-id');
+        // Open edit modal and populate with user data
+        // Similar to create employee, handle the update and send email on success
+      });
+    });
+
+    document.querySelectorAll('.delete-btn').forEach(button => {
+      button.addEventListener('click', function() {
+        const userId = this.getAttribute('data-id');
+        if (confirm('Are you sure you want to delete this employee?')) {
+          fetch(`/delete_employee/${userId}`, {
+            method: 'DELETE'
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              location.reload();
+            } else {
+              alert('Failed to delete employee.');
+            }
+          });
+        }
+      });
+    });
+  </script>
 </body>
 </html>

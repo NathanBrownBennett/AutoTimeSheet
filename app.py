@@ -70,9 +70,10 @@ class User(UserMixin, db.Model):
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
-    description = db.Column(db.String(500))
+    description = db.Column(db.String(300))
     status = db.Column(db.String(50), nullable=False, default='to-do')
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
     user = db.relationship('User', backref=db.backref('tasks', lazy=True))
 
     def set_password(self, password):
@@ -472,12 +473,23 @@ def send_approval_email(user_id):
 @app.route('/create_task', methods=['POST'])
 @login_required
 def create_task():
-    title = request.form.get('title')
-    description = request.form.get('description')
-    task = Task(title=title, description=description, user_id=current_user.id)
+    data = request.get_json()
+    title = data.get('title')
+    description = data.get('description')
+    if not title:
+        return jsonify({'success': False, 'error': 'Title is required'}), 400
+
+    task = Task(title=title, description=description, created_by=current_user.id)
     db.session.add(task)
     db.session.commit()
-    return jsonify({'success': True})
+    return jsonify({'success': True, 'task': {'id': task.id, 'title': task.title, 'description': task.description, 'status': task.status}})
+
+@app.route('/get_tasks', methods=['GET'])
+@login_required
+def get_tasks():
+    tasks = Task.query.filter_by(created_by=current_user.id).all()
+    tasks_data = [{'id': task.id, 'title': task.title, 'description': task.description, 'status': task.status} for task in tasks]
+    return jsonify({'tasks': tasks_data})
 
 @app.route('/update_task/<int:task_id>', methods=['POST'])
 @login_required

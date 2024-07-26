@@ -14,6 +14,9 @@
   <script src="https://unpkg.com/interactjs/dist/interact.min.js"></script>
 </head>
 <body>
+  <div class="wave-container">
+    <div class="curve"></div>
+  </div>
   <header class="container-fluid bg-light">
     <div class="nav-body">
       <div class="container d-flex justify-content-between align-items-center py-3">
@@ -85,7 +88,6 @@
       <div class="card-header">Job Board</div>
       <div class="card-body">
         <div id="job-board">
-          <button class="btn btn-primary" id="create-task-btn">Create Task</button>
           <div id="to-do" class="job-column">
             <h2>To-Do</h2>
             <!-- To-Do tasks will be added here -->
@@ -99,6 +101,7 @@
             <!-- Completed tasks will be added here -->
           </div>
         </div>
+        <button class="btn btn-primary" id="create-task-btn">Create Task</button>
       </div>
     </div>
   </main>
@@ -125,12 +128,37 @@
       $('#create-task-btn').click(function() {
         var title = prompt("Enter task title:");
         if (title) {
-          $.post('/create_task', { title: title, description: '' }, function(response) {
-            if (response.success) {
-              alert("Task created successfully!");
-              // Reload the page or update the job board
-            } else {
-              alert("Failed to create task.");
+          $.ajax({
+            url: '/create_task',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ title: title, description: '' }),
+            success: function(response) {
+              if (response.success) {
+                alert("Task created successfully!");
+                // Add the new task to the "To-Do" column
+                $('#to-do').append(
+                  `<div class="job-task" data-id="${response.task.id}">
+                    <p>${response.task.title}</p>
+                  </div>`
+                );
+                // Add drag-and-drop functionality to the new task
+                interact('.job-task').draggable({
+                  inertia: true,
+                  autoScroll: true,
+                  onmove: dragMoveListener,
+                  onend: function(event) {
+                    var textEl = event.target.querySelector('p');
+                    textEl && (textEl.textContent =
+                      'moved a distance of ' +
+                      (Math.sqrt(Math.pow(event.pageX - event.x0, 2) +
+                        Math.pow(event.pageY - event.y0, 2) | 0))
+                        .toFixed(2) + 'px');
+                  }
+                });
+              } else {
+                alert("Failed to create task.");
+              }
             }
           });
         }
@@ -216,7 +244,7 @@
   <div>
     <br>
     <footer class="container-fluid text-center mt-5">
-      <p>&copy; 2024 Timesheet Management System - Nathan Brown-Bennett</p>
+      <p>&copy; 2024 Buisness Productivity Optimisation App - Nathan Brown-Bennett</p>
     </footer>
   </div>
 </body>
