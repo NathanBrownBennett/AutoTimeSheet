@@ -1,55 +1,162 @@
-# Timesheet Processing Application
+Business Productivity Optimization App
+Overview
+The Business Productivity Optimization App is designed to streamline and enhance productivity within an organization by managing timesheets, job cards, tasks, and organizational settings through a web interface. This application provides features for both administrators and regular users, with specific functionalities tailored to their roles.
 
-## Overview
-This application is designed to automate the process of extracting, processing, and updating timesheet data from documents. It provides a web interface for users to upload timesheet documents, processes these documents to extract relevant data, calculates hours and pay based on the extracted data, and updates an external Excel sheet via an API. Additionally, the application allows users to download a timesheet template for their convenience.
+Features
+User Authentication and Management
 
-## Features
-- **Upload Timesheet:** Users can upload their timesheet documents in .docx format. The application checks if the uploaded file is in the allowed format before processing.
-- **Extract Timesheet Data:** Extracts data such as employee name, week beginning, and daily entries from the uploaded document.
-- **Calculate Hours and Pay:** Processes the extracted timesheet data to calculate total hours worked, including basic hours and overtime, and computes the pay.
-- **Update Excel Sheet:** Updates an external Excel sheet with the calculated data using an API.
-- **Download Timesheet Template:** Users can download a timesheet template document to fill out for their next submission.
+User login and logout.
+User registration with verification code.
+Admins can create, delete, and manage user accounts.
+Password change notifications.
+Timesheet Management
 
-## Installation
-To set up the application, follow these steps:
-1. Clone the repository to your local machine.
-2. Ensure you have Python installed. This application was developed with Python 3.8.
-3. Install the required Python packages using pip:
-    ```
-    pip install -r requirements.txt
-    ```
-4. **Important:** Before running the application, you must set up the Azure AD credentials for API authentication. Run [`create_ADCredentialsdb.py`] to create and configure the credentials database:
-    ```
-    python create_ADCredentialsdb.py
-    ```
-    Follow the prompts to enter your Azure AD Client ID, Client Secret, and Tenant ID. These credentials are necessary for the application to authenticate and update the Excel sheet via the API.
-5. Configure the application settings in app.py, including the upload and processed folders' paths, and allowed file extensions.
-6. Start the application:
-    ```
-    python app.py
-    ```
-7. The application will be accessible at http://localhost:5000.
+Create and upload timesheets.
+Convert timesheet data from documents to JSON.
+Admin review and approval of timesheets.
+Timesheets linked to an organizational calendar.
+Job Card Management
 
-## Usage
-- **Uploading a Timesheet:**
-  1. Navigate to http://localhost:5000.
-  2. Use the upload form to select and upload your timesheet document.
-- **Downloading a Timesheet Template:**
-  - Click on the link provided on the main page to download a timesheet template.
-- **Viewing Processed Data:**
-  - After uploading a timesheet, the application will automatically process the document and provide a link to download the processed data in JSON format.
+Create and manage job cards.
+Admin review and approval of job cards.
+Task Management
 
-## Configuration
-- **API Configuration:** Ensure you have run [`create_ADCredentialsdb.py`] to set up your Azure AD credentials for API authentication. Update [`updateexcel.py`] with your specific requirements to enable updating the Excel sheet.
-- **File Extensions:** Modify app.config['ALLOWED_EXTENSIONS'] in app.py to change allowed file types for upload.
+Create, modify, and delete tasks.
+Tasks organized in a job board with sections for To-Do, In-Progress, and Completed.
+Tasks can be moved between sections.
+Organization Management
 
-## Dependencies
-- Flask: For creating the web application.
-- python-docx: For reading and writing .docx files.
-- requests: For making API requests to update the Excel sheet.
+Admins can manage organization settings.
+Upload company logo.
+Request company name changes.
+Email Notifications
 
-## Contributing
-Contributions to the Timesheet Processing Application are welcome. Please ensure to follow the project's coding standards and submit a pull request for review.
+Notifications for user login, registration, password changes, and task updates.
+Timesheet and job card submission notifications.
+Admins notified of all critical changes and submissions.
+Calendar Integration
 
-## License
-This project is licensed under the MIT License - see the LICENSE file for details.
+Interactive linked calendar visible to all organization members.
+Calendar events can be added and managed by users.
+Admin approval for specific events like sick days or holidays.
+Setup Instructions
+Prerequisites
+Python 3.11+
+Flask
+Flask-SQLAlchemy
+Flask-Login
+Flask-Migrate
+Flask-Mail
+Other dependencies as listed in requirements.txt
+Installation
+Clone the Repository
+sh
+Copy code
+git clone https://github.com/yourusername/business-productivity-optimization-app.git
+cd business-productivity-optimization-app
+Create a Virtual Environment and Install Dependencies
+sh
+Copy code
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+Set Up the Database
+Initialize the database and apply migrations:
+
+sh
+Copy code
+flask db init
+flask db migrate -m "Initial migration"
+flask db upgrade
+Run the Application
+sh
+Copy code
+export FLASK_APP=app.py
+export FLASK_ENV=development
+flask run
+Configuration
+Update the configuration in config.py with your specific settings, such as email server details and database URI.
+
+Project Structure
+graphql
+Copy code
+.
+├── app.py                  # Main application entry point
+├── models.py               # Database models
+├── extensions.py           # Extensions and app factory
+├── sqlalch_config.py       # SQLAlchemy and app configuration
+├── routes/
+│   ├── admin.py            # Admin-related routes
+│   ├── account.py          # Account-related routes
+│   ├── main.py             # Main app routes
+│   ├── tasks.py            # Task-related routes
+│   └── email_utils.py      # Email utility functions
+├── templates/
+│   ├── index.html          # Main index template
+│   ├── login.html          # Login template
+│   ├── register.html       # Registration template
+│   ├── account_settings.html # Account settings template
+│   ├── admin_dashboard.html  # Admin dashboard template
+│   ├── create_job_card.html  # Create job card template
+│   ├── create_timesheet.html # Create timesheet template
+│   ├── employee_settings.html # Employee settings template
+│   ├── info.html            # Info page template
+│   └── verification.html     # Verification code template
+├── static/
+│   ├── style.css            # Main stylesheet
+│   └── default_logo.png     # Default company logo
+└── requirements.txt        # Project dependencies
+Key Functions
+app.py
+create_app(): Initializes the Flask app with all configurations, extensions, and blueprints.
+load_user(user_id): Loads a user by ID for Flask-Login.
+routes/admin.py
+admin_dashboard(): Handles the admin dashboard, user creation, and displays all users.
+create_job_card(): Creates a new job card.
+create_timesheet(): Creates a new timesheet.
+routes/account.py
+account_settings(): Displays account settings for the current user's organization.
+update_account_settings(): Updates account settings for a user.
+upload_logo(): Handles logo upload for the current user's organization.
+request_company_name_change(): Handles company name change requests.
+logout(): Logs out the current user.
+routes/main.py
+index(): Displays the index page with tasks for the current user.
+login(): Handles user login.
+register(): Handles user registration.
+info(): Displays application information.
+upload_file(): Handles file uploads.
+routes/tasks.py
+create_task(): Creates a new task for the current user.
+delete_task(task_id): Deletes a task if the current user is an admin or the task owner.
+routes/email_utils.py
+send_email(subject, recipients, body): Sends an email using Flask-Mail.
+extensions.py
+db: SQLAlchemy instance.
+migrate: Flask-Migrate instance.
+login_manager: Flask-Login instance.
+mail: Flask-Mail instance.
+models.py
+Defines SQLAlchemy models for User, Organisation, Config, Role, Timesheet, JobCard, and Task.
+Usage
+User Registration and Verification
+Users register and receive a verification code via email.
+Enter the verification code on the verification page to activate the account.
+Admin Dashboard
+Admins can manage users, review timesheets, and job cards, and update organization settings.
+Timesheet and Job Card Management
+Users can create and upload timesheets and job cards.
+Admins can review and approve submissions.
+Task Management
+Users can create, modify, and delete tasks.
+Tasks are displayed in a job board with sections for To-Do, In-Progress, and Completed.
+Calendar Integration
+An interactive calendar allows users to view and manage events.
+Events are linked to timesheet entries and can be managed by the admin.
+Contributing
+Contributions are welcome! Please fork the repository and submit pull requests for any enhancements or bug fixes.
+
+License
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+For any issues or further assistance, please contact the project maintainer at your.email@example.com.
