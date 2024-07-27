@@ -40,14 +40,17 @@ Calendar Integration
 Interactive linked calendar visible to all organization members.
 Calendar events can be added and managed by users.
 Admin approval for specific events like sick days or holidays.
+
 Setup Instructions
 Prerequisites
+```
 Python 3.11+
 Flask
 Flask-SQLAlchemy
 Flask-Login
 Flask-Migrate
 Flask-Mail
+```
 Other dependencies as listed in requirements.txt
 Installation
 Clone the Repository
@@ -87,6 +90,7 @@ Configuration
 Update the configuration in config.py with your specific settings, such as email server details and database URI.
 
 Project Structure
+```
 graphql
 .
 ├── app.py                  # Main application entry point
@@ -114,30 +118,36 @@ graphql
 │   ├── style.css            # Main stylesheet
 │   └── default_logo.png     # Default company logo
 └── requirements.txt        # Project dependencies
+```
 
 Key Functions
 app.py
 create_app(): Initializes the Flask app with all configurations, extensions, and blueprints.
 load_user(user_id): Loads a user by ID for Flask-Login.
+
 routes/admin.py
 admin_dashboard(): Handles the admin dashboard, user creation, and displays all users.
 create_job_card(): Creates a new job card.
 create_timesheet(): Creates a new timesheet.
+
 routes/account.py
 account_settings(): Displays account settings for the current user's organization.
 update_account_settings(): Updates account settings for a user.
 upload_logo(): Handles logo upload for the current user's organization.
 request_company_name_change(): Handles company name change requests.
 logout(): Logs out the current user.
+
 routes/main.py
 index(): Displays the index page with tasks for the current user.
 login(): Handles user login.
 register(): Handles user registration.
 info(): Displays application information.
 upload_file(): Handles file uploads.
+
 routes/tasks.py
 create_task(): Creates a new task for the current user.
 delete_task(task_id): Deletes a task if the current user is an admin or the task owner.
+
 routes/email_utils.py
 send_email(subject, recipients, body): Sends an email using Flask-Mail.
 extensions.py
@@ -145,6 +155,7 @@ db: SQLAlchemy instance.
 migrate: Flask-Migrate instance.
 login_manager: Flask-Login instance.
 mail: Flask-Mail instance.
+
 models.py
 Defines SQLAlchemy models for User, Organisation, Config, Role, Timesheet, JobCard, and Task.
 
