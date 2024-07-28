@@ -11,11 +11,6 @@ from datetime import datetime
 main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
-@login_required
-def index():
-    return render_template('index.html', title='Timesheet Processor')
-
-@main_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         organisation_id = request.form.get('organisation')
@@ -29,6 +24,18 @@ def login():
         flash('Login Unsuccessful. Please check username and password', 'danger')
     organisations = Organisation.query.all()
     return render_template('login.html', organisations=organisations)
+
+@main_bp.route('/login', methods=['GET', 'POST'])
+def check_login():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.index'))
+    else:
+        login()
+
+@main_bp.route('/index', methods=['GET', 'POST'])
+@login_required
+def index():
+    return render_template('index.html', title='Timesheet Processor')
 
 @main_bp.route('/upload', methods=['POST'])
 @login_required

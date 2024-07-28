@@ -1,30 +1,31 @@
-from flask_mail import Message
-from flask import current_app as app
-from models import Organisation, Config
-from extensions import mail 
+# routes/email_util.py
+from flask_mail import Mail, Message
+from extensions import db
+from models import Config, Organisation
 
-def send_email(subject, recipients, text_body, html_body=None):
+mail = Mail()
+
+def send_email(subject, recipients, body):
     msg = Message(subject, recipients=recipients)
-    msg.body = text_body
-    if html_body:
-        msg.html = html_body
+    msg.body = body
     mail.send(msg)
+
+def load_email_config(app):
+    with app.app_context():  # Ensure this is within the application context
+        smtp_config = Config.query.filter_by(name='smtp').first()
+        if smtp_config:
+            app.config['MAIL_SERVER'] = smtp_config.server
+            app.config['MAIL_PORT'] = smtp_config.port
+            app.config['MAIL_USE_TLS'] = smtp_config.use_tls
+            app.config['MAIL_USE_SSL'] = smtp_config.use_ssl
+            app.config['MAIL_USERNAME'] = smtp_config.username
+            app.config['MAIL_PASSWORD'] = smtp_config.password
+        mail.init_app(app)
+
 
 def init_mail(app):
     mail.init_app(app)
     load_email_config(app)
-    
-def load_email_config(app):
-    smtp_config = Config.query.filter_by(name='smtp').first()
-    if smtp_config:
-        app.config['MAIL_SERVER'] = smtp_config.value
-        app.config['MAIL_PORT'] = smtp_config.value
-        app.config['MAIL_USE_TLS'] = smtp_config.value
-        app.config['MAIL_USERNAME'] = smtp_config.value
-        app.config['MAIL_PASSWORD'] = smtp_config.value
-        app.config['MAIL_DEFAULT_SENDER'] = smtp_config.value
-    else:
-        print("SMTP configuration not found in the database.")
 
 def send_update_email(user):
     msg = Message("Account Details Updated", recipients=[user.email])

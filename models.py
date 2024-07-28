@@ -13,12 +13,18 @@ class Organisation(db.Model):
 
 class Config(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(64), unique=True, nullable=False)
-    value = db.Column(db.String(128), nullable=False)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    server = db.Column(db.String(100), nullable=False)
+    port = db.Column(db.Integer, nullable=False)
+    use_tls = db.Column(db.Boolean, default=False)
+    use_ssl = db.Column(db.Boolean, default=False)
+    username = db.Column(db.String(100))
+    password = db.Column(db.String(100))
 
 class Role(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), unique=True)
+    logo = db.Column(db.String(150))
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
