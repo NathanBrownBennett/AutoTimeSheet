@@ -1,7 +1,8 @@
 # routes/email_util.py
 from flask_mail import Mail, Message
-from extensions import db
-from models import Config, Organisation
+from app_extensions import db
+from models import Organisation
+from routes.sqlalch_config import Config
 
 mail = Mail()
 

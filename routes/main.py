@@ -1,10 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash, current_app
-from flask_login import login_user, current_user, login_required
+from flask_login import login_user, current_user, login_required, logout_user
 from models import User, Organisation, Timesheet
 from util import allowed_file, save_data
 import os
 from werkzeug.utils import secure_filename
-from extensions import db
+from app_extensions import db
 from routes.email_util import send_email
 from datetime import datetime
 
@@ -12,6 +12,7 @@ main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
 def login():
+    organisations = Organisation.query.all()
     if request.method == 'POST':
         organisation_id = request.form.get('organisation')
         username = request.form.get('username')
@@ -19,11 +20,10 @@ def login():
         user = User.query.filter_by(username=username, organisation_id=organisation_id).first()
         if user and user.check_password(password):
             login_user(user)
-            send_email(user.email, 'Login Alert', f'You have logged in from a new device at {datetime.now()}.')
+            send_email(user.email, 'Login Alert', f'You have logged in from a device at {datetime.now()}.')
             return redirect(url_for('main.index'))
         flash('Login Unsuccessful. Please check username and password', 'danger')
-    organisations = Organisation.query.all()
-    return render_template('login.html', organisations=organisations)
+    return render_template('login.html', title='Login', organisations=organisations)
 
 @main_bp.route('/login', methods=['GET', 'POST'])
 def check_login():
@@ -35,7 +35,7 @@ def check_login():
 @main_bp.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
-    return render_template('index.html', title='Timesheet Processor')
+    return render_template('index.html', title='Buisiness Productivity App')
 
 @main_bp.route('/upload', methods=['POST'])
 @login_required

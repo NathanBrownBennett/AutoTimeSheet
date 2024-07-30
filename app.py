@@ -1,36 +1,37 @@
 # app.py
 from flask import Flask
-from extensions import db, login_manager, mail
-from routes.sqlalch_config import Config
+from init_extensions import init_extensions
 from models import User, Organisation, JobCard, Timesheet
+from app_extensions import db, login_manager
 
-def create_app(config_class=Config):
-    app.config.from_object(config_class)
-    with app.app_context():
-        db.init_app(app)
-        login_manager.init_app(app)
-        mail.init_app(app)
-        
-        @login_manager.user_loader
-        def load_user(user_id):
-            return User.query.get(int(user_id))
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object('routes.sqlalch_config.Config')
+    
+    init_extensions(app)
+    db.init_app(app)
+    
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
+    
+    @login_manager.request_loader
+    def load_organisation(organisation_id):
+        return Organisation.query.get(int(organisation_id))
+    
+    @login_manager.request_loader
+    def load_job_card(job_card_id):
+        return JobCard.query.get(int(job_card_id))
+    
+    @login_manager.request_loader
+    def load_timesheet(timesheet_id):
+        return Timesheet.query.get(int(timesheet_id))
 
-        from routes.main import main_bp
-        from routes.admin import admin_bp
-        from routes.account import account_bp 
-        from routes.tasks import tasks_bp
+    from routes.main import main_bp
+    app.register_blueprint(main_bp)
 
-        app.register_blueprint(main_bp)  
-        app.register_blueprint(admin_bp) 
-        app.register_blueprint(account_bp)
-        app.register_blueprint(tasks_bp)
-
-        #from routes.email_util import load_email_config
-        #load_email_config(app)
-
-        return app
+    return app
 
 if __name__ == "__main__":
-    app = Flask(__name__)
     app = create_app()
     app.run(debug=True, host='0.0.0.0')
