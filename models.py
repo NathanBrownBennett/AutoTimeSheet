@@ -67,8 +67,8 @@ class JobCard(db.Model):
     duration = db.Column(db.Float, nullable=False)
     picture = db.Column(db.String(100))
     video = db.Column(db.String(100))
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(datetime.timezone.utc))
-    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(datetime.timezone.utc), onupdate=datetime.now(datetime.timezone.utc))
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
 
 class Timesheet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -77,8 +77,8 @@ class Timesheet(db.Model):
     date_commencing = db.Column(db.Date, nullable=False)
     hours_worked = db.Column(db.Float, nullable=False)
     user = db.relationship('User', backref=db.backref('timesheets', lazy=True))
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(datetime.timezone.utc))
-    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(datetime.timezone.utc), onupdate=datetime.now(datetime.timezone.utc))
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
 
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -87,8 +87,8 @@ class Task(db.Model):
     status = db.Column(db.String(50), nullable=False, default='to-do')  # to-do, in-progress, completed
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship('User', backref=db.backref('tasks', lazy=True))
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(datetime.timezone.utc))
-    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(datetime.timezone.utc), onupdate=datetime.now(datetime.timezone.utc))
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
 
     def __repr__(self):
         return f'<Task {self.title}>'
@@ -97,8 +97,8 @@ class SuperAdmin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(datetime.timezone.utc))
-    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(datetime.timezone.utc), onupdate=datetime.now(datetime.timezone.utc))
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
     Role = db.relationship('Role', backref=db.backref('super_admin', lazy=True))
     Organisation = db.relationship('Organisation', backref=db.backref('super_admin', lazy=True))
 
