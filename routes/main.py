@@ -1,10 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash, current_app
 from flask_login import login_user, current_user, login_required, logout_user
-from models import User, Organisation, Timesheet
+from models import User, Organisation, Timesheet, JobCard
 from util import allowed_file, save_data
 import os
 from werkzeug.utils import secure_filename
-from app_extensions import db
+from app_extensions import db, login_manager, mail, bcrypt
 from routes.email_util import send_email
 from datetime import datetime
 
@@ -12,7 +12,6 @@ main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
 def login():
-    organisations = Organisation.query.all()
     if request.method == 'POST':
         organisation_id = request.form.get('organisation')
         username = request.form.get('username')
@@ -23,12 +22,13 @@ def login():
             send_email(user.email, 'Login Alert', f'You have logged in from a device at {datetime.now()}.')
             return redirect(url_for('main.index'))
         flash('Login Unsuccessful. Please check username and password', 'danger')
+    organisations = Organisation.query.all()
     return render_template('login.html', title='Login', organisations=organisations)
 
 @main_bp.route('/login', methods=['GET', 'POST'])
 def check_login():
     if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
+        return redirect(url_for('index.html'))
     else:
         login()
 

@@ -1,10 +1,7 @@
-from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from app_extensions import db, bcrypt
-
-db = SQLAlchemy()
 
 class Organisation(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -6,6 +6,10 @@ from routes.sqlalch_config import Config
 
 mail = Mail()
 
+def init_mail(app):
+    mail.init_app(app)
+    load_email_config(app)
+
 def send_email(subject, recipients, body):
     msg = Message(subject, recipients=recipients)
     msg.body = body
@@ -22,11 +26,6 @@ def load_email_config(app):
             app.config['MAIL_USERNAME'] = smtp_config.username
             app.config['MAIL_PASSWORD'] = smtp_config.password
         mail.init_app(app)
-
-
-def init_mail(app):
-    mail.init_app(app)
-    load_email_config(app)
 
 def send_update_email(user):
     msg = Message("Account Details Updated", recipients=[user.email])
