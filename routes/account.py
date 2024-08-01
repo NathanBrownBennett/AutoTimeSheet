@@ -26,19 +26,20 @@ def login():
 @account_bp.route('/account_settings', methods=['GET', 'POST'])
 @login_required
 def account_settings():
-    if not current_user.is_admin:
-        return redirect(url_for('main.index'))
     if request.method == 'POST':
-        # Handle the form submission to update account settings
+        return render_template('account_settings.html', title='Account Settings', user=current_user, role=current_user.role)
         pass
     return render_template('account_settings.html')
 
 @account_bp.route('/login', methods=['GET', 'POST'])
 def check_login():
     if current_user.is_authenticated:
-        return redirect(url_for('index.html'))
+        if current_user.is_verified:
+            return redirect(url_for('main.index'))
+        if not current_user.is_verified:
+            return redirect(url_for('account.verify_account'))
     else:
-        login()
+        return redirect(url_for('account.login'))
 
 @account_bp.route('/logout')
 @login_required
@@ -47,8 +48,7 @@ def logout():
     return redirect(url_for('main.index'))
 
 @account_bp.route('/register', methods=['GET', 'POST'])
-@login_required
-def register():
+def register_organisation():
     if request.method == 'POST':
         organisation_name = request.form.get('organisation_name')
         username = request.form.get('username')
@@ -64,5 +64,32 @@ def register():
         db.session.commit()
         flash('Account created successfully!', 'success')
         send_email(new_user.email, 'Welcome!', 'Your account has been created.')
-        return redirect(url_for('main.login'))
+        send_email(organisation.email, 'New User', f'A new user has been added to your organisation: {new_user.username}')
+        return redirect(url_for('account.login'))
     return render_template('register.html')
+
+@account_bp.route('/delete_account', methods=['POST'])
+@login_required
+def delete_account():
+    user = User.query.get(current_user.id)
+    db.session.delete(user)
+    db.session.commit()
+    flash('Account deleted successfully.', 'success')
+    return redirect(url_for('account.login'))
+
+@account_bp.route('/verify_account', methods=['POST'])
+def verify_account():
+    username = request.form.get('username')
+    password = request.form.get('password')
+    user = User.query.filter_by(username=username).first()
+    if user and user.check_password(password):
+        user.is_verified = True
+        if user.number_of_logins == 0:
+            user.last_login_time = datetime.now()
+            return render_template('verify_account.html', user=user, title='Verify Account - Change Password')
+        db.session.commit()
+        flash('Account verified successfully.', 'success')
+        return redirect(url_for('main.index'))
+    else:
+        flash('Invalid username or password.', 'danger')
+    return redirect(url_for('account.login'))

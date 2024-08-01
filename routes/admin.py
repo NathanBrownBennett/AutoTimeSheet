@@ -39,6 +39,7 @@ def admin_dashboard():
         db.session.commit()
 
         send_email(new_user.email, 'Account Created', f'Your account has been created with username: {username}')
+        send_email(organisation.email, 'New User Created', f'A new user has been created with username: {username}')
 
         flash('User created successfully.', 'success')
 

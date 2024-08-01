@@ -1,5 +1,5 @@
 from flask_login import UserMixin
-from datetime import datetime
+from datetime import datetime, timezone
 from werkzeug.security import generate_password_hash, check_password_hash
 from app_extensions import db, bcrypt
 
@@ -7,6 +7,11 @@ class Organisation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(150), unique=True, nullable=False)
     logo = db.Column(db.String(150))
+    organisation_email = db.Column(db.String(100))
+    employees = db.relationship('User', backref=db.backref('organisation', lazy=True))
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
+    verified = db.Column(db.Boolean, default=False)
 
 class Config(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -20,8 +25,8 @@ class Config(db.Model):
 
 class Role(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(64), unique=True)
-    logo = db.Column(db.String(150))
+    role = db.Column(db.String(64), unique=True)
+    user = db.relationship('User', backref=db.backref('role', lazy=True))
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -31,6 +36,11 @@ class User(UserMixin, db.Model):
     organisation_id = db.Column(db.Integer, db.ForeignKey('organisation.id'))
     role = db.relationship('Role', backref=db.backref('users', lazy=True))
     organisation = db.relationship('Organisation', backref=db.backref('employees', lazy=True))
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
+    last_login_time = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+    number_of_logins = db.Column(db.Integer, default=0)
+    verified = db.Column(db.Boolean, default=False)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password, method='pbkdf2:sha256')
@@ -57,6 +67,8 @@ class JobCard(db.Model):
     duration = db.Column(db.Float, nullable=False)
     picture = db.Column(db.String(100))
     video = db.Column(db.String(100))
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(datetime.timezone.utc))
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(datetime.timezone.utc), onupdate=datetime.now(datetime.timezone.utc))
 
 class Timesheet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -65,6 +77,8 @@ class Timesheet(db.Model):
     date_commencing = db.Column(db.Date, nullable=False)
     hours_worked = db.Column(db.Float, nullable=False)
     user = db.relationship('User', backref=db.backref('timesheets', lazy=True))
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(datetime.timezone.utc))
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(datetime.timezone.utc), onupdate=datetime.now(datetime.timezone.utc))
 
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -73,8 +87,26 @@ class Task(db.Model):
     status = db.Column(db.String(50), nullable=False, default='to-do')  # to-do, in-progress, completed
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship('User', backref=db.backref('tasks', lazy=True))
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(datetime.timezone.utc))
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(datetime.timezone.utc), onupdate=datetime.now(datetime.timezone.utc))
 
     def __repr__(self):
         return f'<Task {self.title}>'
+    
+class SuperAdmin(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(datetime.timezone.utc))
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(datetime.timezone.utc), onupdate=datetime.now(datetime.timezone.utc))
+    Role = db.relationship('Role', backref=db.backref('super_admin', lazy=True))
+    Organisation = db.relationship('Organisation', backref=db.backref('super_admin', lazy=True))
+
+    def set_password(self, password):
+        self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+
+    def check_password(self, password):
+        return bcrypt.check_password_hash(self.password_hash, password)
+
+    def __repr__(self):
+        return f'<SuperAdmin {self.username}>'
