@@ -4,6 +4,12 @@ from models import db, Task
 
 tasks_bp = Blueprint('tasks', __name__)
 
+@tasks_bp.route('/load_tasks', methods=['GET'])
+@login_required
+def tasks():
+    Tasks = Task.query.filter_by(user_id=current_user.id).all()
+    return Tasks
+
 @tasks_bp.route('/create_task', methods=['POST'])
 @login_required
 def create_task():

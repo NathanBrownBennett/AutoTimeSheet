@@ -30,9 +30,9 @@ def create_app():
     print("Imported tasks_bp spinning up tasks_bp")
     app.register_blueprint(tasks_bp)
     
-    from routes.email_util import send_email
-    print("Imported init_mail spinning up init_mail")
-    app.register_blueprint(send_mail)
+    from routes.admin import admin_bp
+    print("Imported admin spinning up admin_bp")
+    app.register_blueprint(admin_bp)
     
     return app
 

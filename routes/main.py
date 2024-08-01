@@ -6,31 +6,8 @@ import os
 from werkzeug.utils import secure_filename
 from app_extensions import db, login_manager, mail, bcrypt
 from routes.email_util import send_email
-from datetime import datetime
 
 main_bp = Blueprint('main', __name__)
-
-@main_bp.route('/')
-def login():
-    if request.method == 'POST':
-        organisation_id = request.form.get('organisation')
-        username = request.form.get('username')
-        password = request.form.get('password')
-        user = User.query.filter_by(username=username, organisation_id=organisation_id).first()
-        if user and user.check_password(password):
-            login_user(user)
-            send_email(user.email, 'Login Alert', f'You have logged in from a device at {datetime.now()}.')
-            return redirect(url_for('main.index'))
-        flash('Login Unsuccessful. Please check username and password', 'danger')
-    organisations = Organisation.query.all()
-    return render_template('login.html', title='Login', organisations=organisations)
-
-@main_bp.route('/login', methods=['GET', 'POST'])
-def check_login():
-    if current_user.is_authenticated:
-        return redirect(url_for('index.html'))
-    else:
-        login()
 
 @main_bp.route('/index', methods=['GET', 'POST'])
 @login_required
