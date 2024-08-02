@@ -1,8 +1,8 @@
 # app.py
 from flask import Flask
-from init_extensions import init_extensions
+from init_extensions import setup
 from models import User
-from app_extensions import db, login_manager
+from app_extensions import db, login_manager, mail
 
 def create_app():
     print("setting app environment var")
@@ -11,7 +11,7 @@ def create_app():
     app.config.from_object('routes.sqlalch_config.Config')
     print("App configured")
     
-    init_extensions(app)
+    setup(app)
     print("Extensions initialized")
     
     @login_manager.user_loader

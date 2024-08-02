@@ -27,6 +27,17 @@ class Role(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     role = db.Column(db.String(64), unique=True)
     user = db.relationship('User', backref=db.backref('role', lazy=True))
+    
+class Employee(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), nullable=False)
+    phone = db.Column(db.String(20), nullable=False)
+    address = db.Column(db.String(200), nullable=False)
+    organisation_id = db.Column(db.Integer, db.ForeignKey('organisation.id'))
+    organisation = db.relationship('Organisation', backref=db.backref('employees', lazy=True))
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -35,7 +46,7 @@ class User(UserMixin, db.Model):
     role_id = db.Column(db.Integer, db.ForeignKey('role.id'))
     organisation_id = db.Column(db.Integer, db.ForeignKey('organisation.id'))
     role = db.relationship('Role', backref=db.backref('users', lazy=True))
-    organisation = db.relationship('Organisation', backref=db.backref('employees', lazy=True))
+    organisation = db.relationship('Organisation', backref=db.backref('user_organisations', lazy=True))
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
     last_login_time = db.Column(db.DateTime, default=datetime.now(timezone.utc))
