@@ -1,17 +1,7 @@
 from flask_login import UserMixin
 from datetime import datetime, timezone
 from werkzeug.security import generate_password_hash, check_password_hash
-from app_extensions import db, bcrypt
-
-class Organisation(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(150), unique=True, nullable=False)
-    logo = db.Column(db.String(150))
-    organisation_email = db.Column(db.String(100))
-    employees = db.relationship('User', backref=db.backref('organisation', lazy=True))
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
-    verified = db.Column(db.Boolean, default=False)
+from extensions.app_extensions import db, bcrypt
 
 class Config(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -22,6 +12,15 @@ class Config(db.Model):
     use_ssl = db.Column(db.Boolean, default=False)
     username = db.Column(db.String(100))
     password = db.Column(db.String(100))
+class Organisation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), unique=True, nullable=False)
+    logo = db.Column(db.String(150))
+    organisation_email = db.Column(db.String(100))
+    employees = db.relationship('User', backref=db.backref('organisation', lazy=True))
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
+    verified = db.Column(db.Boolean, default=False)
 
 class Role(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -30,12 +29,14 @@ class Role(db.Model):
     
 class Employee(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), nullable=False)
     phone = db.Column(db.String(20), nullable=False)
     address = db.Column(db.String(200), nullable=False)
-    organisation_id = db.Column(db.Integer, db.ForeignKey('organisation.id'))
+    organisation_id = db.Column(db.Integer, db.ForeignKey('organisation.id'), nullable=False)
     organisation = db.relationship('Organisation', backref=db.backref('employees', lazy=True))
+    role_id = db.Column(db.Integer, db.ForeignKey('role.id'), nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
 

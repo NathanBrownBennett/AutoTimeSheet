@@ -1,4 +1,14 @@
-from app_extensions import db, migrate, login_manager, mail, bcrypt
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from flask_login import LoginManager
+from flask_mail import Mail
+from flask_bcrypt import Bcrypt
+
+db = SQLAlchemy()
+migrate = Migrate()
+login_manager = LoginManager()
+mail = Mail()
+bcrypt = Bcrypt()
 
 def setup(app):
 	print("Setting up extensions")

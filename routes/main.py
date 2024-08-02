@@ -4,7 +4,7 @@ from models import User, Organisation, Timesheet, JobCard
 from util import allowed_file, save_data
 import os
 from werkzeug.utils import secure_filename
-from app_extensions import db, login_manager, mail, bcrypt
+from extensions.app_extensions import db, login_manager, mail, bcrypt
 from routes.email_util import send_email
 
 main_bp = Blueprint('main', __name__)
