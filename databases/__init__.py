@@ -1,0 +1,4 @@
+# Databases init
+import databases.configure_msal
+import databases.create_ADCredentialsdb
+import databases.create_sqlalchemydb
