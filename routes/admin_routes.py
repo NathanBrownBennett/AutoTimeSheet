@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_required, current_user
-from extensions.app_extensions import db
+from init_extensions import db
 from models import User, Role, JobCard, Timesheet
 import jsonify
 from werkzeug.utils import secure_filename

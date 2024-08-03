@@ -1,6 +1,6 @@
 # routes/email_util.py
 from flask_mail import Mail, Message
-from extensions.app_extensions import db
+from init_extensions import db
 from models import Organisation
 from routes.sqlalch_config import Config
 

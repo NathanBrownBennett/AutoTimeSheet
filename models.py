@@ -1,7 +1,7 @@
 from flask_login import UserMixin
 from datetime import datetime, timezone
 from werkzeug.security import generate_password_hash, check_password_hash
-from extensions.app_extensions import db, bcrypt
+from init_extensions import db, bcrypt
 
 class Config(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -83,7 +83,7 @@ def update_excel_file(access_token, employee_data):
     print("Excel sheet updated successfully.")
 
 # Load calculated employee data
-calculated_json_path = '/mnt/data/employee_data.json'
+calculated_json_path = '/Users/nathanbrown-bennett/AutoTimeSheet/Server_Side_Processing/Server_Tests/Demo_Data/employee_data.json'
 with open(calculated_json_path, 'r') as json_file:
     employee_data = json.load(json_file)
 
