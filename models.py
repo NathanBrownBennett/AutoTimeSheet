@@ -17,7 +17,7 @@ class Organisation(db.Model):
     name = db.Column(db.String(150), unique=True, nullable=False)
     logo = db.Column(db.String(150))
     organisation_email = db.Column(db.String(100))
-    employees = db.relationship('User', backref=db.backref('organisation', lazy=True))
+    employees = db.relationship('User', backref='organisation', lazy=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
     verified = db.Column(db.Boolean, default=False)
@@ -25,8 +25,8 @@ class Organisation(db.Model):
 class Role(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     role = db.Column(db.String(64), unique=True)
-    user = db.relationship('User', backref=db.backref('role', lazy=True))
-    
+    users = db.relationship('User', backref='role', lazy=True)
+
 class Employee(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -35,7 +35,6 @@ class Employee(db.Model):
     phone = db.Column(db.String(20), nullable=False)
     address = db.Column(db.String(200), nullable=False)
     organisation_id = db.Column(db.Integer, db.ForeignKey('organisation.id'), nullable=False)
-    organisation = db.relationship('Organisation', backref=db.backref('employees', lazy=True))
     role_id = db.Column(db.Integer, db.ForeignKey('role.id'), nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
@@ -46,8 +45,6 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128), nullable=False)
     role_id = db.Column(db.Integer, db.ForeignKey('role.id'))
     organisation_id = db.Column(db.Integer, db.ForeignKey('organisation.id'))
-    role = db.relationship('Role', backref=db.backref('users', lazy=True))
-    organisation = db.relationship('Organisation', backref=db.backref('user_organisations', lazy=True))
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
     last_login_time = db.Column(db.DateTime, default=datetime.now(timezone.utc))
@@ -62,7 +59,7 @@ class User(UserMixin, db.Model):
 
     @property
     def is_admin(self):
-        return self.role.name == 'admin'
+        return self.role.role == 'admin'
 
     def __repr__(self):
         return f'<User {self.username}>'
@@ -111,8 +108,10 @@ class SuperAdmin(db.Model):
     password_hash = db.Column(db.String(128), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
-    Role = db.relationship('Role', backref=db.backref('super_admin', lazy=True))
-    Organisation = db.relationship('Organisation', backref=db.backref('super_admin', lazy=True))
+    role_id = db.Column(db.Integer, db.ForeignKey('role.id'))
+    organisation_id = db.Column(db.Integer, db.ForeignKey('organisation.id'))
+    role = db.relationship('Role', backref=db.backref('super_admins', lazy=True))
+    organisation = db.relationship('Organisation', backref=db.backref('super_admins', lazy=True))
 
     def set_password(self, password):
         self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')

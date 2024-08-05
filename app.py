@@ -1,7 +1,7 @@
 # app.py
 from flask import Flask
-#from extensions.init_extensions import setup, login_manager, db
-import init_extensions
+from init_extensions import setup, login_manager, db
+#import init_extensions
 from models import User
 from routes import sqlalch_config, account, tasks, admin, main
 
@@ -12,8 +12,8 @@ def create_app():
     app.config.from_object('routes.sqlalch_config.Config')
     print("App configured")
     
-    login_manager = init_extensions.login_manager
-    setup = init_extensions.setup
+    #login_manager = init_extensions.login_manager
+    #setup = init_extensions.setup
     
     login_manager.login_view = 'account.login'
     login_manager.login_message_category = 'info'
@@ -48,5 +48,5 @@ if __name__ == "__main__":
     print("Running app.py")
     app = create_app()
     print("App created")
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0', port=5000)
     print("App closed")
