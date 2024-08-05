@@ -1,9 +1,9 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_user, logout_user, current_user, login_required
-from models import User, Organisation
+from ..models import User, Organisation
 from werkzeug.security import generate_password_hash, check_password_hash
-from init_extensions import db, login_manager, mail, bcrypt
-from routes.email_util import send_email
+from ..init_extensions import db, login_manager, mail, bcrypt
+from .email_util import send_email
 from datetime import datetime
 
 account_bp = Blueprint('account', __name__)

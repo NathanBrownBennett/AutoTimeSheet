@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, redirect, url_for, flash
 from flask_login import login_required, current_user
-from models import db, Task
+from ..models import db, Task
 
 tasks_bp = Blueprint('tasks', __name__)
 

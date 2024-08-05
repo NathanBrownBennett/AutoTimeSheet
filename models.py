@@ -1,7 +1,14 @@
 from flask_login import UserMixin
 from datetime import datetime, timezone
 from werkzeug.security import generate_password_hash, check_password_hash
-from init_extensions import db, bcrypt
+from .init_extensions import db, bcrypt
+from sqlalchemy import create_engine, Column, String, Integer, ForeignKey
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+#import os
+
+##Base = declarative_base()
+#basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -121,3 +128,23 @@ class SuperAdmin(db.Model):
 
     def __repr__(self):
         return f'<SuperAdmin {self.username}>'
+    
+#SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///' + os.path.join(basedir, '..', 'databases', 'instance', 'site.db')
+#engine = create_engine(SQLALCHEMY_DATABASE_URI, echo=True)
+#Base.metadata.create_all(bind=engine)
+#
+#Session = sessionmaker(bind=engine)
+#session = Session()
+#
+#p1 = Config(name='config1', server='server1', port=8080, use_tls=True, use_ssl=False, username='user1', password='password1')
+#p2 = Organisation(name='org1', logo='logo1', organisation_email='org1@example.com', verified=True)
+#p3 = Role(role='role1')
+#p4 = Employee(name='employee1', email='employee1@example.com', phone='1234567890', address='address1', organisation_id=1, role_id=1)
+#p5 = User(username='user1', role_id=1, organisation_id=1)
+#p6 = JobCard(job_id='job1', description='description1', location='location1', company='company1', date=datetime.now().date(), price=100.0, completed_by='user1', duration=2.5)
+#p7 = Timesheet(user_id=1, week_start=datetime.now().date(), date_commencing=datetime.now().date(), hours_worked=8.0)
+#p8 = SuperAdmin(username='admin1', role_id=1, organisation_id=1)
+#p9 = Task(title='task1', description='task description1', status='to-do', user_id=1)
+#
+#session.add_all([p1, p2, p3, p4, p5, p6, p7, p8, p9])
+#session.commit()"""

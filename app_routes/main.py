@@ -1,11 +1,11 @@
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash, current_app
 from flask_login import login_user, current_user, login_required, logout_user
-from models import User, Organisation, Timesheet, JobCard
-from Server_Side_Processing.util import allowed_file, save_data
+from ..models import User, Organisation, Timesheet, JobCard
+from ..Server_Side_Processing.util import allowed_file, save_data
 import os
 from werkzeug.utils import secure_filename
-from init_extensions import db, login_manager, mail, bcrypt
-from routes.email_util import send_email
+from ..init_extensions import db, login_manager, mail, bcrypt
+from .email_util import send_email
 
 main_bp = Blueprint('main', __name__)
 
