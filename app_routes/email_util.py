@@ -4,7 +4,7 @@ from flask_mail import Mail, Message
 from ..init_extensions import db
 from ..models import Organisation
 from .sqlalch_config import Config
-from math import random as rand
+from ..Server_Side_Processing.verify_paseto import generate_paseto_token
 
 mail = Mail()
 
@@ -42,7 +42,8 @@ def request_company_name_change(organisation_id, new_company_name):
         mail.send(msg)
         
 def send_verification_email(user):
-    token = user.get_verification_token()
-    msg = Message("Account Verification", recipients=[user.email])
-    msg.body = f"Please verify your account by clicking the following link: {url_for('account.verify_account', token=token, _external=True)}"
+    token = generate_paseto_token(user.id)
+    verification_url = url_for('account.verify', token=token, _external=True)
+    msg = Message("Verification Email", recipients=[user.email])
+    msg.body = f'Please verify your account by clicking the following link: {verification_url}'
     mail.send(msg)

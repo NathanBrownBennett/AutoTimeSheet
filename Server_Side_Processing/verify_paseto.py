@@ -1,8 +1,20 @@
-# Server_Side_Processing/verify_paseto.py
+# Server_Side_Processing/verify_paseto.py for handling app logins and user verification
 import paseto
 from datetime import datetime, timedelta
 
-SECRET_KEY = b'your-256-bit-secret'  # Replace with your actual secret key
+def get_secret_key(organization_name, user_id):
+    user_name_length = len(user_id)
+    secret_key = f'{organization_name}-{user_name_length}-secret-key'.encode('utf-8')
+    return secret_key
+
+SECRET_KEY = get_secret_key(organization_name, user_id)
+
+def login_(email, password):
+    email_domain = email.split('@')[1]
+    email_classes = ['superadmin', 'organisation', 'employee']
+    if email_domain == 'superadmin':
+        return True
+        
 
 def generate_paseto_token(user_id):
     payload = {
