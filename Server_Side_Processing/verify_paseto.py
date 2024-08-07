@@ -9,7 +9,7 @@ def get_secret_key(organization_name, user_id):
 
 SECRET_KEY = get_secret_key(organization_name, user_id)
 
-def login_(email, password):
+def verify_account_type(email, password):
     email_domain = email.split('@')[1]
     email_classes = ['superadmin', 'organisation', 'employee']
     if email_domain == 'superadmin':
