@@ -25,7 +25,7 @@ if "%OS%"=="Windows_NT" (
             echo Upgrading database
 
             echo Running the application...
-            python3 app.py
+            flask run
         ) else (
             echo Python version is below 3.11. Installing Python...
             REM Install Python on Windows

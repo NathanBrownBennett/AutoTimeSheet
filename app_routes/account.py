@@ -47,11 +47,12 @@ def logout():
     logout_user()
     return redirect(url_for('main.index'))
 
-@account_bp.route('/register', methods=['GET', 'POST'])
+@account_bp.route('/register_organisation', methods=['GET', 'POST'])
 def register_organisation():
     if request.method == 'POST':
         organisation_name = request.form.get('organisation_name')
-        username = request.form.get('username')
+        organisationEmail = request.form.get('email')
+        username = organisationEmail.strip().split('@')[0]
         password = request.form.get('password')
         organisation = Organisation.query.filter_by(name=organisation_name).first()
         if not organisation:

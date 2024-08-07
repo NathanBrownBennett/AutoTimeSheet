@@ -18,7 +18,7 @@ if command -v python3 &>/dev/null; then
         echo "upgrading database"
 
         echo "Running the application..."
-        python3 app.py
+        flask run
     else
         echo "Python version is below 3.11. Installing Python..."
         if [[ $(uname) == "Darwin" ]]; then

@@ -33,7 +33,7 @@ def create_app(config_class=Config):
     
     from .app_routes.account import account_bp
     print("Imported account_bp spinning up account_bp")
-    app.register_blueprint(account_bp)
+    app.register_blueprint(account_bp, url_prefix='/')
     
     from .app_routes.tasks import tasks_bp
     print("Imported tasks_bp spinning up tasks_bp")
