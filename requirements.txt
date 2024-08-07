@@ -142,6 +142,8 @@ outcome==1.2.0
 packaging==24.1
 pandas==2.1.4
 parso==0.8.4
+paseto==2.0.0
+pendulum==3.0.0
 pexpect==4.9.0
 pickleshare==0.7.5
 pillow==10.3.0
@@ -157,6 +159,7 @@ py-enigma==0.1
 pyasn1==0.5.0
 pyasn1-modules==0.3.0
 pycparser==2.22
+pycryptodomex==3.20.0
 pydantic==2.6.1
 pydantic_core==2.16.2
 pyenchant==3.2.2
@@ -332,6 +335,7 @@ PyQt6==6.5.3
 PyQt6-Qt6==6.5.3
 PyQt6-sip==13.6.0
 PySocks==1.7.1
+pysodium==0.7.17
 pytesseract==0.3.10
 python-dateutil==2.8.2
 python-docx==1.1.2
@@ -385,6 +389,7 @@ tensorflow-estimator==2.15.0
 tensorflow-io-gcs-filesystem==0.34.0
 termcolor==2.3.0
 terminaltables==3.1.10
+time-machine==2.15.0
 tokenizers==0.15.0
 torch==2.0.1
 tornado==6.4.1
