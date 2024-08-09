@@ -5,6 +5,7 @@ from ..init_extensions import db
 from ..models import Organisation
 from .sqlalch_config import Config
 from ..Server_Side_Processing.verify_paseto import generate_paseto_token
+from ..init_extensions import mail
 
 mail = Mail()
 

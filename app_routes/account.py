@@ -5,23 +5,56 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from ..init_extensions import db, login_manager, mail, bcrypt
 from .email_util import send_email
 from datetime import datetime
+from ..Server_Side_Processing.verify_paseto import generate_paseto_token, verify_paseto_token, resend_verification_email
 
 account_bp = Blueprint('account', __name__)
 
 @account_bp.route('/')
 def login():
+    organisations = Organisation.query.all()
+    users = User.query.all()
+    return render_template('login.html', title='Login', organisations=organisations, users=users)
+
+# Organisation Login Route
+@account_bp.route('/login_organisation', methods=['GET', 'POST'])
+def login_organisation():
+    if request.method == 'POST':
+        organisation_id = request.form.get('organisation')
+        password = request.form.get('password')
+        organisation = Organisation.query.get(organisation_id)
+        
+        if organisation and bcrypt.check_password_hash(organisation.password, password):
+            login_user(organisation, remember=True)
+            return redirect(url_for('main.index'))
+        else:
+            flash('Login Unsuccessful. Please check password', 'danger')
+    organisations = Organisation.query.all()
+    return render_template('login.html', organisations=organisations)
+
+# Employee Login Route
+@account_bp.route('/login_employee', methods=['GET', 'POST'])
+def login_employee():
     if request.method == 'POST':
         organisation_id = request.form.get('organisation')
         username = request.form.get('username')
         password = request.form.get('password')
         user = User.query.filter_by(username=username, organisation_id=organisation_id).first()
-        if user and user.check_password(password):
-            login_user(user)
-            send_email(user.email, 'Login Alert', f'You have logged in from a device at {datetime.now()}.')
-            return redirect(url_for('main.index'))
-        flash('Login Unsuccessful. Please check username and password', 'danger')
+        
+        if user and bcrypt.check_password_hash(user.password_hash, password):
+            if user.verified:
+                login_user(user, remember=True)
+                return redirect(url_for('main.index'))
+            else:
+                return redirect(url_for('account.verify_account', email=user.email, username=user.username))
+        else:
+            flash('Login Unsuccessful. Please check username and password', 'danger')
     organisations = Organisation.query.all()
-    return render_template('login.html', title='Login', organisations=organisations)
+    return render_template('login.html', organisations=organisations)
+
+# Guest Login Route
+@account_bp.route('/guest')
+def guest():
+    return render_template('index.html')
 
 @account_bp.route('/account_settings', methods=['GET', 'POST'])
 @login_required
@@ -52,7 +85,7 @@ def register_organisation():
     if request.method == 'POST':
         organisation_name = request.form.get('organisation_name')
         organisationEmail = request.form.get('email')
-        username = organisationEmail.strip().split('@')[0]
+        username = request.form.get('username')
         password = request.form.get('password')
         organisation = Organisation.query.filter_by(name=organisation_name).first()
         if not organisation:
@@ -80,6 +113,7 @@ def delete_account():
 
 @account_bp.route('/verify_account', methods=['POST'])
 def verify_account():
+    email = request.form.get('email')
     username = request.form.get('username')
     password = request.form.get('password')
     user = User.query.filter_by(username=username).first()
@@ -94,3 +128,11 @@ def verify_account():
     else:
         flash('Invalid username or password.', 'danger')
     return redirect(url_for('account.login'))
+
+@account_bp.route('/resend_verification', methods=['POST'])
+def resend_verification():
+    email = request.form['email']
+    account_type = request.form['account_type']
+    resend_verification_email(email, account_type)
+    flash('A new verification email has been sent.', 'info')
+    return redirect(url_for('main.verify_account', email=email, account_type=account_type))

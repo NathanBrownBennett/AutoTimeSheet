@@ -17,6 +17,18 @@
       </div>
       <button type="submit" class="btn btn-primary">Verify</button>
     </form>
+    <form method="POST" action="{{ url_for('main.resend_verification') }}" style="margin-top: 20px;">
+      <input type="hidden" name="email" value="{{ email }}">
+      <input type="hidden" name="account_type" value="{{ account_type }}">
+      <button type="submit" class="btn btn-secondary" id="resend-button" disabled>Resend Email</button>
+    </form>
   </div>
+
+  <script>
+    // Enable the resend button after 5 minutes
+    setTimeout(function() {
+      document.getElementById('resend-button').disabled = false;
+    }, 300000); // 300000 ms = 5 minutes
+  </script>
 </body>
 </html>
