@@ -22,7 +22,7 @@
                     <input type="email" class="form-control" id="email" name="email" required>
                     <small class="text-danger">
                         {% if form.email.errors %}
-                            {{ form.email.errors|join:", " }}
+                            {{ form.email.errors|join(", ") }}
                         {% endif %}
                     </small>
                 </div>

@@ -1,5 +1,5 @@
 # routes/email_util.py
-from flask import url_for
+from flask import url_for, current_app
 from flask_mail import Mail, Message
 from ..init_extensions import db
 from ..models import Organisation
@@ -41,10 +41,19 @@ def request_company_name_change(organisation_id, new_company_name):
         msg = Message("Request for Company Name Change", recipients=['superadmin@example.com'])
         msg.body = f"Organisation {organisation.name} (ID: {organisation_id}) has requested to change its name to {new_company_name}."
         mail.send(msg)
-        
+
 def send_verification_email(user):
-    token = generate_paseto_token(user.id)
+    token = generate_paseto_token(user.email, user.account_type)
     verification_url = url_for('account.verify', token=token, _external=True)
     msg = Message("Verification Email", recipients=[user.email])
     msg.body = f'Please verify your account by clicking the following link: {verification_url}'
     mail.send(msg)
+
+def send_confirmation_email(email):
+    subject = "Account Verified"
+    message = "Your account has been successfully verified."
+    send_email(subject, [email], message)
+
+def resend_verification_email(email, account_type):
+    token = generate_paseto_token(email, account_type)
+    send_verification_email(email, account_type, token)

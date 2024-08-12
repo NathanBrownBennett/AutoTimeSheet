@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 import paseto
 from flask import current_app
-from ..app_routes.email_util import send_email
 
 # Constants
 TOKEN_EXPIRY_MINUTES = 5
@@ -34,21 +33,3 @@ def verify_paseto_token(token):
     except Exception as e:
         print(f"Error verifying token: {e}")
         return None
-
-# Send verification email
-def send_verification_email(email, account_type, token):
-    subject = "Account Verification"
-    verification_link = f"{current_app.config['BASE_URL']}/verify/{token}"
-    message = f"Please verify your account by clicking on the following link: {verification_link}"
-    send_email(subject, message, email)
-
-# Send confirmation email after successful verification
-def send_confirmation_email(email):
-    subject = "Account Verified"
-    message = "Your account has been successfully verified."
-    send_email(subject, message, email)
-
-# Resend verification email
-def resend_verification_email(email, account_type):
-    token = generate_paseto_token(email, account_type)
-    send_verification_email(email, account_type, token)

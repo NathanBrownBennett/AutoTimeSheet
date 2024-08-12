@@ -13,7 +13,11 @@ main_bp = Blueprint('main', __name__)
 @main_bp.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
-    return render_template('index.html', title='Buisiness Productivity App')
+    return render_template('index.html', title='Buisiness Productivity App', user=current_user)
+
+@main_bp.route('/info', methods=['GET', 'POST'])
+def info():
+    return render_template('info.html', title='Info')
 
 @main_bp.route('/upload', methods=['POST'])
 @login_required
@@ -34,7 +38,7 @@ def upload_file():
         return redirect(url_for('main.index'))
     return redirect(request.url)
 
-@main_bp.route('#', methods=['GET'])
+@main_bp.route('/#', methods=['GET'])
 def createTask():
     create_task()
     delete_task()

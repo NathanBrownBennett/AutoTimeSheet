@@ -13,114 +13,132 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://unpkg.com/interactjs/dist/interact.min.js"></script>
 </head>
-<body>
-  <div class="wave-container">
-    <div class="curve"></div>
-  </div>
-  <header class="container-fluid bg-light">
-    <div class="nav-body">
-      <div class="container d-flex justify-content-between align-items-center py-3">
-        {% if current_user.is_authenticated %}
-        <div>
-          <h1>{{ current_user.organisation.name if current_user.organisation else 'Your Organisation' }}</h1>
-          {% if current_user.organisation and current_user.organisation.logo %}
-            <img src="{{ url_for('static', filename='uploads/' + current_user.organisation.logo) }}" alt="Company Logo" style="height: 50px;">
-          {% else %}
-            <img src="{{ url_for('static', filename='default_logo.png') }}" alt="Company Logo" style="height: 50px;">
-          {% endif %}
-        </div>
-        <nav class="nav">
+
+<body class="d-flex flex-column min-vh-100">
+  <div class="container">
+    <header class="container-fluid bg-light">
+      <div class="nav-body">
+        <div class="container d-flex justify-content-between align-items-center py-3">
           {% if current_user.is_authenticated %}
-              {% if current_user.is_admin %}
-                  <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Manage Organisation</a>
+            <div>
+              <h1>{{ current_user.organisation.name if current_user.organisation else 'Your Organisation' }}</h1>
+              {% if current_user.organisation and current_user.organisation.logo %}
+                <img src="{{ url_for('static', filename='uploads/' + current_user.organisation.logo) }}" alt="Company Logo" style="height: 50px;">
+              {% else %}
+                <img src="{{ url_for('static', filename='default_logo.png') }}" alt="Company Logo" style="height: 50px;">
               {% endif %}
+            </div>
+          {% else %}
+            <div>
+              <h1>Welcome Guest</h1>
+              <img src="{{ url_for('static', filename='default_logo.png') }}" alt="Company Logo" style="height: 50px;">
+            </div>
+          {% endif %}
+
+          <nav class="nav">
+            <a class="nav-link" href="{{ url_for('main.info') }}">Info</a>
+            {% if current_user.is_authenticated %}
               <a class="nav-link" href="{{ url_for('main.index') }}">Home Page</a>
               <a class="nav-link" href="{{ url_for('account.account_settings') }}">Account Settings</a>
               <a class="nav-link" href="{{ url_for('account.logout') }}">Logout</a>
-          {% else %}
-              <a class="nav-link" href="{{ url_for('main.index') }}">Home Page</a>
+              {% if current_user.is_admin %}
+                <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Manage Organisation</a>
+            {% else %}
+                <p>Welcome Guest</p>
+            {% endif %}
+          </nav>
           {% endif %}
-          <a class="nav-link" href="{{ url_for('main.info') }}">Info</a>
-        </nav>
-        {% endif %}
+        </div>
       </div>
-    </div>
-  </header>
+    </header>
+  </div>
 
   <main class="container mt-5">
-    <div class="card mb-5">
-      <div class="card-header">Actions</div>
-      <div class="card-body">
-        <a href="{{ url_for('admin.create_timesheet') }}" class="btn btn-primary">Create Timesheet</a>
-        <a href="{{ url_for('admin.create_job_card') }}" class="btn btn-primary">Create Job Card</a>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">Upload Timesheet</div>
-      <div class="card-body">
-        <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
-          <div class="mb-3">
-            <label for="timesheetFile" class="form-label">Drag and Drop Timesheet Here or</label>
-            <input class="form-control" type="file" id="timesheetFile" name="file" accept=".docx,.pdf">
-            <div id="fileError" class="invalid-feedback"></div>
-          </div>
-          <button type="submit" class="btn btn-primary">Upload</button>
-          <span id="uploadStatus" class="text-muted"></span>
-        </form>
-        <br>
-        <a href="/download_template" class="btn btn-secondary">Download Timesheet Template</a>
-      </div>
-    </div>
-
-    <div class="card mt-5">
-      <div class="card-header">Recent Uploads</div>
-      <div class="card-body">
-        <p>This feature is currently unavailable.</p>
-      </div>
-    </div>
-
-    <div class="card mt-5">
-      <div class="card-header">View Calendar</div>
-      <div class="card-body">
-        <p>View / Modify Organisation calendar events listed here</p>
-        <div id='calendar'></div>
-      </div>
-    </div>
-
-    <div class="card mt-5">
-      <div class="card-header">Job Board</div>
-      <div class="card-body">
-        <div id="job-board">
-          <div id="to-do" class="job-column">
-            <h2>To-Do</h2>
-            <!-- To-Do tasks will be added here -->
-          </div>
-          <div id="in-progress" class="job-column">
-            <h2>In-Progress</h2>
-            <!-- In-Progress tasks will be added here -->
-          </div>
-          <div id="completed" class="job-column">
-            <h2>Completed</h2>
-            <!-- Completed tasks will be added here -->
-          </div>
+    <div class="container">
+      <div class="card mb-5">
+        <div class="card-header">Actions</div>
+        <div class="card-body">
+          <a href="{{ url_for('main.create_timesheet') }}" class="btn btn-primary">Create Timesheet</a>
+          <a href="{{ url_for('main.create_job_card') }}" class="btn btn-primary">Create Job Card</a>
         </div>
-        <a href="#" class="btn btn-primary" id="create-task-btn">Create Task</a>
-        <a href="#" class="btn btn-primary" id="delete-task-btn">Delete Task</a>
       </div>
     </div>
+
+    <div class="container">
+      <div class="card">
+        <div class="card-header">Upload Timesheet</div>
+        <div class="card-body">
+          <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+              <label for="timesheetFile" class="form-label">Drag and Drop Timesheet Here or</label>
+              <input class="form-control" type="file" id="timesheetFile" name="file" accept=".docx,.pdf">
+              <div id="fileError" class="invalid-feedback"></div>
+            </div>
+            <button type="submit" class="btn btn-primary">Upload</button>
+            <span id="uploadStatus" class="text-muted"></span>
+          </form>
+          <br>
+          <a href="/download_template" class="btn btn-secondary">Download Timesheet Template</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="card mt-5">
+        <div class="card-header">Recent Uploads</div>
+        <div class="card-body">
+          <p>This feature is currently unavailable.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="card mt-5">
+        <div class="card-header">View Calendar</div>
+        <div class="card-body">
+          <p>View / Modify Organisation calendar events listed here</p>
+          <div id='calendar'></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="card mt-5">
+        <div class="card-header">Job Board</div>
+        <div class="card-body">
+          <div id="job-board">
+            <div id="to-do" class="job-column">
+              <h2>To-Do</h2>
+              <!-- To-Do tasks will be added here -->
+            </div>
+            <div id="in-progress" class="job-column">
+              <h2>In-Progress</h2>
+              <!-- In-Progress tasks will be added here -->
+            </div>
+            <div id="completed" class="job-column">
+              <h2>Completed</h2>
+              <!-- Completed tasks will be added here -->
+            </div>
+          </div>
+          <a href="#" class="btn btn-primary" id="create-task-btn">Create Task</a>
+          <a href="#" class="btn btn-primary" id="modify-task-btn">Modify Task</a>
+          <a href="#" class="btn btn-primary" id="delete-task-btn">Delete Task</a>
+        </div>
+      </div>
+    </div>
+
   </main>
 
-  <div id="task-modal" class="modal">
-    <div class="modal-content">
-      <span class="close">&times;</span>
-      <form id="task-form">
-        <label for="task-message">Task Message:</label>
-        <textarea id="task-message" name="task-message" required></textarea>
-        <button type="submit" class="btn btn-primary">Save</button>
-      </form>
+    <div id="task-modal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <form id="task-form">
+          <label for="task-message">Task Message:</label>
+          <textarea id="task-message" name="task-message" required></textarea>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </form>
+      </div>
     </div>
-  </div>
 
   <script>
     $(document).ready(function() {
@@ -259,8 +277,10 @@
     });
   </script>
 
-  <footer class="container-fluid text-center mt-5">
-    <p>&copy; 2024 Business Productivity Optimisation App - Nathan Brown-Bennett</p>
+  <footer class="mt-auto py-3 bg-light text-center">
+    <div class="container">
+      <p>&copy; 2024 Business Productivity Optimisation App - Nathan Brown-Bennett</p>
+    </div>
   </footer>
 </body>
 </html>

@@ -10,6 +10,11 @@ body {
     color: white; /* Default text color is white */
 }
 
+.text-center{
+    text-align: center;
+    color: white;
+}
+
 .container {
     max-width: 800px; /* Ensures content is centered and not too wide */
     justify-content: center;

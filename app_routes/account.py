@@ -3,9 +3,10 @@ from flask_login import login_user, logout_user, current_user, login_required
 from ..models import User, Organisation
 from werkzeug.security import generate_password_hash, check_password_hash
 from ..init_extensions import db, login_manager, mail, bcrypt
-from .email_util import send_email
+from .email_util import send_email, resend_verification_email
 from datetime import datetime
-from ..Server_Side_Processing.verify_paseto import generate_paseto_token, verify_paseto_token, resend_verification_email
+from ..Server_Side_Processing.verify_paseto import generate_paseto_token, verify_paseto_token
+from ..forms import RegistrationForm
 
 account_bp = Blueprint('account', __name__)
 
@@ -54,7 +55,7 @@ def login_employee():
 # Guest Login Route
 @account_bp.route('/guest')
 def guest():
-    return render_template('index.html')
+    return render_template('index.html', title='Guest Demo', user='Guest')
 
 @account_bp.route('/account_settings', methods=['GET', 'POST'])
 @login_required
@@ -71,6 +72,8 @@ def check_login():
             return redirect(url_for('main.index'))
         if not current_user.is_verified:
             return redirect(url_for('account.verify_account'))
+        elif current_user.is_guest:
+            return redirect(url_for('main.index', user='Guest'))
     else:
         return redirect(url_for('account.login'))
 
@@ -80,27 +83,64 @@ def logout():
     logout_user()
     return redirect(url_for('main.index'))
 
+@account_bp.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        organisation = request.form.get('organisation')
+        email = request.form.get('email')
+        user = User.query.filter_by(email=email).first()
+        if user:
+            send_email(user.email, 'Reset Password', 'Click the link below to reset your password.')
+            send_email(organisation.email, 'Password Reset', f'A password reset link has been sent to {user.email} as they have forgotten their password.')
+            flash(f'A password reset link has been sent to your {email} and {organisation} has been notified of this change', 'info')
+            return redirect(url_for('account.login'))
+        flash('Email not found.', 'danger')
+    return render_template('forgot_password.html')
+
+@account_bp.route('/register_employee', methods=['GET', 'POST'])
+@login_required
+def register_employee():
+    if current_user.is_admin:
+        if request.method == 'POST':
+            username = request.form.get('username')
+            password = request.form.get('password')
+            hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+            new_user = User(
+                username=username,
+                password_hash=hashed_password,
+                organisation_id=current_user.id
+            )
+            db.session.add(new_user)
+            db.session.commit()
+            flash('Employee registered successfully.', 'success')
+            send_email(User.email, 'New User', f'A new user has been added to your organisation: {User.username}')
+            return render_template('admin_dashboard.html')
+    else:
+        flash('You do not have permission to access this page.', 'danger')
+        return render_template('index.html')
+
 @account_bp.route('/register_organisation', methods=['GET', 'POST'])
 def register_organisation():
     if request.method == 'POST':
         organisation_name = request.form.get('organisation_name')
-        organisationEmail = request.form.get('email')
-        username = request.form.get('username')
+        email = request.form.get('email')
         password = request.form.get('password')
-        organisation = Organisation.query.filter_by(name=organisation_name).first()
-        if not organisation:
-            organisation = Organisation(name=organisation_name)
-            db.session.add(organisation)
-            db.session.commit()
-        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-        new_user = User(username=username, password_hash=hashed_password, organisation_id=organisation.id)
-        db.session.add(new_user)
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+        
+        new_organisation = Organisation(
+            name=organisation_name,
+            organisation_email=email,
+            password=hashed_password
+        )
+        
+        db.session.add(new_organisation)
         db.session.commit()
-        flash('Account created successfully!', 'success')
-        send_email(new_user.email, 'Welcome!', 'Your account has been created.')
-        send_email(organisation.email, 'New User', f'A new user has been added to your organisation: {new_user.username}')
+        send_email(Organisation.email, 'Welcome!', 'Your account has been created.')
+        flash('Organisation registered successfully.', 'success')
         return redirect(url_for('account.login'))
+    
     return render_template('register.html')
+        
 
 @account_bp.route('/delete_account', methods=['POST'])
 @login_required
