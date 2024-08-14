@@ -121,15 +121,16 @@ def register_employee():
 
 @account_bp.route('/register_organisation', methods=['GET', 'POST'])
 def register_organisation():
-    if request.method == 'POST':
-        organisation_name = request.form.get('organisation_name')
-        email = request.form.get('email')
-        password = request.form.get('password')
+    form = RegistrationForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        organisation_name = form.organisation_name.data
+        email = form.email.data
+        password = form.password.data
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
         
         new_organisation = Organisation(
             name=organisation_name,
-            organisation_email=email,
+            email=email,
             password=hashed_password
         )
         
@@ -139,7 +140,7 @@ def register_organisation():
         flash('Organisation registered successfully.', 'success')
         return redirect(url_for('account.login'))
     
-    return render_template('register.html')
+    return render_template('register.html', form=form)
         
 
 @account_bp.route('/delete_account', methods=['POST'])

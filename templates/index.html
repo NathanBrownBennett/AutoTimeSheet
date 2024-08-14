@@ -32,6 +32,9 @@
             <div>
               <h1>Welcome Guest</h1>
               <img src="{{ url_for('static', filename='default_logo.png') }}" alt="Company Logo" style="height: 50px;">
+              <p class="demo-text"> This is a demo version of the Business Productivity Optimisation App</p>
+              <p class="demo-text"> Please note that some features may not be available, but feel free to have a look around</p>
+              <p class="demo-text"> Make an account to try the features currently availiable</p>
             </div>
           {% endif %}
 
@@ -43,8 +46,6 @@
               <a class="nav-link" href="{{ url_for('account.logout') }}">Logout</a>
               {% if current_user.is_admin %}
                 <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Manage Organisation</a>
-            {% else %}
-                <p>Welcome Guest</p>
             {% endif %}
           </nav>
           {% endif %}

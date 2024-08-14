@@ -5,6 +5,7 @@ from .init_extensions import setup, login_manager, db
 from .models import User
 from .app_routes import account, tasks, admin, main
 from .app_routes.sqlalch_config import Config
+from dotenv import load_dotenv
 
 def create_app(config_class=Config):
     print("setting app environment var")
@@ -15,6 +16,7 @@ def create_app(config_class=Config):
     
     #login_manager = init_extensions.login_manager
     #setup = init_extensions.setup
+    load_dotenv()
     
     login_manager.login_view = 'account.login'
     login_manager.login_message_category = 'info'

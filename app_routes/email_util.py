@@ -3,10 +3,9 @@ from flask import url_for, current_app
 from flask_mail import Mail, Message
 from ..init_extensions import db
 from ..models import Organisation
-from .sqlalch_config import Config
+from .sqlalch_config import Config, Mail_Configs
 from ..Server_Side_Processing.verify_paseto import generate_paseto_token
 from ..init_extensions import mail
-
 mail = Mail()
 
 def init_mail(app):

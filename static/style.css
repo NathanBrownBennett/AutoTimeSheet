@@ -15,6 +15,11 @@ body {
     color: white;
 }
 
+.demo-text{
+    color: white;
+    text-align: center;
+}
+
 .container {
     max-width: 800px; /* Ensures content is centered and not too wide */
     justify-content: center;
