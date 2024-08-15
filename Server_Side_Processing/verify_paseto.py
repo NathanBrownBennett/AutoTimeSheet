@@ -1,35 +1,26 @@
-from datetime import datetime, timedelta
-import paseto
-from flask import current_app
+import time
+from paseto import PasetoV2
+#from paseto.v2 import PasetoV2Public as PasetoV2
+from paseto.exceptions import PasetoException
+from ..app_routes.email_util import resend_verification_email
 
-# Constants
-TOKEN_EXPIRY_MINUTES = 5
+SECRET_KEY = 'your_secret_key'  # Replace with your actual secret key
 
-# Generate a PASETO token
 def generate_paseto_token(email, account_type):
+    expiration = int(time.time()) + 300
     payload = {
-        "email": email,
-        "account_type": account_type,
-        "exp": (datetime.utcnow() + timedelta(minutes=TOKEN_EXPIRY_MINUTES)).timestamp()
+        'email': email,
+        'account_type': account_type,
+        'exp': expiration
     }
-    token = paseto.create(
-        purpose='local',
-        payload=payload,
-        key=current_app.config['SECRET_KEY']
-    )
-    return token
+    return PasetoV2.sign(payload, SECRET_KEY)
 
-# Verify the PASETO token
-def verify_paseto_token(token):
+def verify_paseto_token(token, email, account_type):
     try:
-        payload = paseto.parse(
-            purpose='local',
-            token=token,
-            key=current_app.config['SECRET_KEY']
-        )
-        if datetime.utcnow().timestamp() > payload['exp']:
-            return None  # Token expired
-        return payload
-    except Exception as e:
-        print(f"Error verifying token: {e}")
-        return None
+        payload = PasetoV2.verify(token, SECRET_KEY)
+        if payload['email'] == email and payload['account_type'] == account_type:
+            return True
+        else:
+            return False
+    except PasetoException:
+        return False

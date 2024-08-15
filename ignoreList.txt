@@ -1,1 +1,4 @@
 json/daily\Wk2_June_Timesheet.json
+/Server_Side_Processing/totalHourDict.py
+Server_Side_Processing/updateExcel.py
+Server_Side_Processing/timesheet2json.py

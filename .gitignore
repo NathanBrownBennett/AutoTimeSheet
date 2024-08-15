@@ -1,0 +1,15 @@
+# Ignore environment variable files
+.env
+autorun.flaskenv
+
+# Ignore Python bytecode files
+__pycache__/
+*.py[cod]
+
+# Ignore virtual environment directories
+venv/
+env/
+
+# Ignore other sensitive or unnecessary files
+*.log
+*.sqlite3

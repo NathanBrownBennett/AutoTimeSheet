@@ -10,14 +10,52 @@
 <body>
   <div class="container">
     <h1>Verify Account</h1>
-    <form method="POST" action="{{ url_for('main.verify') }}">
+    <form method="POST" action="{{ url_for('account.verify_account') }}">
       <div class="mb-3">
         <label for="verification_code" class="form-label">Verification Code</label>
         <input type="text" id="verification_code" name="verification_code" class="form-control" required>
       </div>
+      <input type="hidden" name="email" value="{{ email }}">
+      <input type="hidden" name="account_type" value="{{ account_type }}">
       <button type="submit" class="btn btn-primary">Verify</button>
     </form>
-    <form method="POST" action="{{ url_for('main.resend_verification') }}" style="margin-top: 20px;">
+    <form method="POST" action="{{ url_for('account.resend_verification') }}" style="margin-top: 20px;">
+      <input type="hidden" name="email" value="{{ email }}">
+      <input type="hidden" name="account_type" value="{{ account_type }}">
+      <button type="submit" class="btn btn-secondary" id="resend-button" disabled>Resend Email</button>
+    </form>
+  </div>
+
+  <script>
+    // Enable the resend button after 5 minutes
+    setTimeout(function() {
+      document.getElementById('resend-button').disabled = false;
+    }, 300000); // 300000 ms = 5 minutes
+  </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Account</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <h1>Verify Account</h1>
+    <form method="POST" action="{{ url_for('account.verify_account') }}">
+      <div class="mb-3">
+        <label for="verification_code" class="form-label">Verification Code</label>
+        <input type="text" id="verification_code" name="verification_code" class="form-control" required>
+      </div>
+      <input type="hidden" name="email" value="{{ email }}">
+      <input type="hidden" name="account_type" value="{{ account_type }}">
+      <button type="submit" class="btn btn-primary">Verify</button>
+    </form>
+    <form method="POST" action="{{ url_for('account.resend_verification') }}" style="margin-top: 20px;">
       <input type="hidden" name="email" value="{{ email }}">
       <input type="hidden" name="account_type" value="{{ account_type }}">
       <button type="submit" class="btn btn-secondary" id="resend-button" disabled>Resend Email</button>

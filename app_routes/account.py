@@ -16,19 +16,33 @@ def login():
     users = User.query.all()
     return render_template('login.html', title='Login', organisations=organisations, users=users)
 
-# Organisation Login Route
-@account_bp.route('/login_organisation', methods=['GET', 'POST'])
+@account_bp.route('/login/organisation', methods=['GET', 'POST'])
 def login_organisation():
     if request.method == 'POST':
-        organisation_id = request.form.get('organisation')
+        org_id = request.form.get('organisation')
         password = request.form.get('password')
-        organisation = Organisation.query.get(organisation_id)
-        
-        if organisation and bcrypt.check_password_hash(organisation.password, password):
-            login_user(organisation, remember=True)
-            return redirect(url_for('main.index'))
+        organisation = Organisation.query.filter_by(id=org_id).first()
+
+        if organisation and organisation.check_password(password):
+            if organisation.verified == 0:
+                # Organisation is not verified, redirect to verification
+                token = generate_paseto_token(organisation.email, 'organisation')
+                resend_verification_email(organisation.email, token)
+                flash('Your account is not verified. A verification email has been sent.', 'warning')
+                return redirect(url_for('main.verify_account', email=organisation.email))
+            else:
+                # Organisation is verified, proceed to login
+                login_user(organisation, remember=True)
+                flash('Login successful.', 'success')
+                return redirect(url_for('main.index'))
+
         else:
-            flash('Login Unsuccessful. Please check password', 'danger')
+            # Incorrect password
+            if organisation:
+                send_email(organisation.email)
+            flash('Invalid credentials. Please try again.', 'danger')
+            return redirect(url_for('account.login'))
+
     organisations = Organisation.query.all()
     return render_template('login.html', organisations=organisations)
 
@@ -152,23 +166,28 @@ def delete_account():
     flash('Account deleted successfully.', 'success')
     return redirect(url_for('account.login'))
 
-@account_bp.route('/verify_account', methods=['POST'])
+@account_bp.route('/verify_account', methods=['GET', 'POST'])
 def verify_account():
-    email = request.form.get('email')
-    username = request.form.get('username')
-    password = request.form.get('password')
-    user = User.query.filter_by(username=username).first()
-    if user and user.check_password(password):
-        user.is_verified = True
-        if user.number_of_logins == 0:
-            user.last_login_time = datetime.now()
-            return render_template('verify_account.html', user=user, title='Verify Account - Change Password')
-        db.session.commit()
-        flash('Account verified successfully.', 'success')
-        return redirect(url_for('main.index'))
-    else:
-        flash('Invalid username or password.', 'danger')
-    return redirect(url_for('account.login'))
+    if request.method == 'POST':
+        verification_code = request.form.get('verification_code')
+        email = request.form.get('email')
+        account_type = request.form.get('account_type')
+
+        if verify_paseto_token(verification_code, email, account_type):
+            if account_type == 'organisation':
+                account = Organisation.query.filter_by(email=email).first()
+            else:
+                account = User.query.filter_by(email=email).first()
+
+            account.verified = 1
+            db.session.commit()
+            flash('Account successfully verified.', 'success')
+            return redirect(url_for('main.index'))
+        else:
+            flash('Invalid verification code. Please try again.', 'danger')
+            return redirect(url_for('main.verify_account'))
+
+    return render_template('verification.html')
 
 @account_bp.route('/resend_verification', methods=['POST'])
 def resend_verification():
