@@ -9,6 +9,13 @@ __pycache__/
 # Ignore virtual environment directories
 venv/
 env/
+myenv/
+docx-template/
+.venv/
+.vscode/
+bin/
+include/
+lib/
 
 # Ignore other sensitive or unnecessary files
 *.log
