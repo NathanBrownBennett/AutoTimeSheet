@@ -29,6 +29,9 @@ class Organisation(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
     verified = db.Column(db.Boolean, default=False)
+    
+    def check_password(self, password):
+        return bcrypt.check_password_hash(self.password, password)
 
 class Role(db.Model):
     id = db.Column(db.Integer, primary_key=True)
