@@ -6,11 +6,12 @@ flask_mail
 flask_bcrypt
 flask_wtf
 wtforms
+wtforms[email]
 python-dotenv
 pyseto
 msal
 pillow
-docx
+python-docx
 tk
 werkzeug
 beautifulsoup4

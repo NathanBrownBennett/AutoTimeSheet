@@ -1,6 +1,6 @@
 import time
 from pyseto import Key, Paseto
-from pyseto.exceptions import PasetoError
+from pyseto.exceptions import PysetoError
 
 SECRET_KEY = 'your_secret_key'  # Replace with your actual secret key
 
@@ -25,5 +25,5 @@ def verify_paseto_token(token, email, account_type):
             return True
         else:
             return False
-    except PasetoError:
+    except PysetoError:
         return False
