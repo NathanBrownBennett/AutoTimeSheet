@@ -5,10 +5,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from ..init_extensions import db, login_manager, mail, bcrypt
 from .email_util import send_email, resend_verification_email
 from datetime import datetime
-from ..Server_Side_Processing.verify_paseto import generate_paseto_token, verify_paseto_token
+from ..Server_Side_Processing.verify_paseto import verify_paseto_token, generate_paseto_token
 from ..forms import RegistrationForm
 
 account_bp = Blueprint('account', __name__)
+
+types_of_accounts = ['organisation', 'employee', 'guest', 'admin']
 
 @account_bp.route('/')
 def login():
@@ -18,6 +20,7 @@ def login():
 
 @account_bp.route('/login/organisation', methods=['GET', 'POST'])
 def login_organisation():
+    account_type = types_of_accounts[0]
     if request.method == 'POST':
         org_id = request.form.get('organisation')
         password = request.form.get('password')
@@ -26,7 +29,7 @@ def login_organisation():
         if organisation and organisation.check_password(password):
             if organisation.verified == 0:
                 # Organisation is not verified, redirect to verification
-                token = generate_paseto_token(organisation.email, 'organisation')
+                token = generate_code(organisation.email, account_type)
                 resend_verification_email(organisation.email, token)
                 flash('Your account is not verified. A verification email has been sent.', 'warning')
                 return redirect(url_for('main.verify_account', email=organisation.email))
@@ -49,6 +52,7 @@ def login_organisation():
 # Employee Login Route
 @account_bp.route('/login_employee', methods=['GET', 'POST'])
 def login_employee():
+    account_type = types_of_accounts[1]
     if request.method == 'POST':
         organisation_id = request.form.get('organisation')
         username = request.form.get('username')
@@ -173,16 +177,21 @@ def verify_account():
         email = request.form.get('email')
         account_type = request.form.get('account_type')
 
-        if verify_paseto_token(verification_code, email, account_type):
+        token_verified = verify_paseto_token(verification_code, email, account_type)
+        
+        if token_verified == True:
             if account_type == 'organisation':
-                account = Organisation.query.filter_by(email=email).first()
+                organisation = Organisation.query.filter_by(email=email).first()
+                account.verified = 1
+                db.session.commit()
+                flash('Account successfully verified.', 'success')
+                return redirect(url_for('account.admin_dashboard'))
             else:
                 account = User.query.filter_by(email=email).first()
-
-            account.verified = 1
-            db.session.commit()
-            flash('Account successfully verified.', 'success')
-            return redirect(url_for('main.index'))
+                account.verified = 1
+                db.session.commit()
+                flash('Account successfully verified.', 'success')
+                return redirect(url_for('main.index'))
         else:
             flash('Invalid verification code. Please try again.', 'danger')
             return redirect(url_for('main.verify_account'))
@@ -193,6 +202,24 @@ def verify_account():
 def resend_verification():
     email = request.form['email']
     account_type = request.form['account_type']
-    resend_verification_email(email, account_type)
-    flash('A new verification email has been sent.', 'info')
+    token = request.form['token']
+
+    # Verify the token
+    token_verified = verify_paseto_token(token, email, account_type)
+
+    if not token_verified:
+        # Token is invalid or expired
+        token = None
+
+        # Generate a new verification code
+        new_token = generate_paseto_token(email, account_type)
+
+        # Send the new verification code to the user
+        resend_verification_email(email, new_token)
+
+        flash('A new verification email has been sent.', 'info')
+    else:
+        flash('The verification code is still valid.', 'info')
+        resend_verification_email(email, token)
+        flash('A new verification email has been sent.', 'info')
     return redirect(url_for('main.verify_account', email=email, account_type=account_type))
