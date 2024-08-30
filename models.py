@@ -29,6 +29,8 @@ class Organisation(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
     verified = db.Column(db.Boolean, default=False)
+    last_generated_code = db.Column(db.String(6))
+    last_generated_code_time = db.Column(db.DateTime)
     
     def check_password(self, password):
         return bcrypt.check_password_hash(self.password, password)
@@ -42,7 +44,7 @@ class Employee(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), db.ForeignKey('user.email'), nullable=False)
     phone = db.Column(db.String(20), nullable=False)
     address = db.Column(db.String(200), nullable=False)
     organisation_id = db.Column(db.Integer, db.ForeignKey('organisation.id'), nullable=False)
@@ -52,6 +54,7 @@ class Employee(db.Model):
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    email = Column(String(120), unique=True, nullable=False)
     username = db.Column(db.String(64), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     role_id = db.Column(db.Integer, db.ForeignKey('role.id'))
@@ -61,6 +64,8 @@ class User(UserMixin, db.Model):
     last_login_time = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     number_of_logins = db.Column(db.Integer, default=0)
     verified = db.Column(db.Boolean, default=False)
+    last_generated_code = db.Column(db.String(6))
+    last_generated_code_time = db.Column(db.DateTime)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password, method='pbkdf2:sha256')

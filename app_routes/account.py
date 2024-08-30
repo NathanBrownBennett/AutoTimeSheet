@@ -3,20 +3,38 @@ from flask_login import login_user, logout_user, current_user, login_required
 from ..models import User, Organisation
 from werkzeug.security import generate_password_hash, check_password_hash
 from ..init_extensions import db, login_manager, mail, bcrypt
-from .email_util import send_email, resend_verification_email
+from .email_util import send_email, resend_verification_email, send_verification_email, send_update_email, send_confirmation_email
 from datetime import datetime
-from ..Server_Side_Processing.verify_paseto import verify_paseto_token, generate_paseto_token
+from ..Server_Side_Processing.verify_paseto import verify_code, generate_code
 from ..forms import RegistrationForm
 
 account_bp = Blueprint('account', __name__)
 
-types_of_accounts = ['organisation', 'employee', 'guest', 'admin']
+types_of_accounts = [Organisation, User, 'employee', 'guest', 'admin']
+
+ACCOUNT_TYPE_MAP = {
+    'organisation': Organisation,
+    'employee': User,
+    'guest': User
+}
 
 @account_bp.route('/')
 def login():
     organisations = Organisation.query.all()
     users = User.query.all()
     return render_template('login.html', title='Login', organisations=organisations, users=users)
+
+@account_bp.route('/request_employee_access', methods=['GET', 'POST'])
+def request_employee_access():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        organisation = Organisation.query.filter_by(email=email).first()
+        if organisation:
+            send_email(organisation.email, 'Employee Access Request', f'An employee has requested access to your organisation with email: {email}')
+            flash('Request sent to organisation.', 'info')
+            return redirect(url_for('account.login'))
+        flash('Organisation not found.', 'danger')
+    return render_template('login.html')
 
 @account_bp.route('/login/organisation', methods=['GET', 'POST'])
 def login_organisation():
@@ -30,9 +48,9 @@ def login_organisation():
             if organisation.verified == 0:
                 # Organisation is not verified, redirect to verification
                 token = generate_code(organisation.email, account_type)
-                resend_verification_email(organisation.email, token)
+                resend_verification_email(organisation.email, account_type, token)
                 flash('Your account is not verified. A verification email has been sent.', 'warning')
-                return redirect(url_for('main.verify_account', email=organisation.email))
+                return redirect(url_for('account.verify_account', email=organisation.email))
             else:
                 # Organisation is verified, proceed to login
                 login_user(organisation, remember=True)
@@ -104,59 +122,49 @@ def logout():
 @account_bp.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
-        organisation = request.form.get('organisation')
         email = request.form.get('email')
         user = User.query.filter_by(email=email).first()
         if user:
             send_email(user.email, 'Reset Password', 'Click the link below to reset your password.')
+            organisation = Organisation.query.get(user.organisation_id)
             send_email(organisation.email, 'Password Reset', f'A password reset link has been sent to {user.email} as they have forgotten their password.')
-            flash(f'A password reset link has been sent to your {email} and {organisation} has been notified of this change', 'info')
+            flash(f'A password reset link has been sent to your {email} and {organisation.name} has been notified of this change', 'info')
             return redirect(url_for('account.login'))
         flash('Email not found.', 'danger')
+        return render_template('forgot_password.html')
     return render_template('forgot_password.html')
-
-@account_bp.route('/register_employee', methods=['GET', 'POST'])
-@login_required
-def register_employee():
-    if current_user.is_admin:
-        if request.method == 'POST':
-            username = request.form.get('username')
-            password = request.form.get('password')
-            hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-            new_user = User(
-                username=username,
-                password_hash=hashed_password,
-                organisation_id=current_user.id
-            )
-            db.session.add(new_user)
-            db.session.commit()
-            flash('Employee registered successfully.', 'success')
-            send_email(User.email, 'New User', f'A new user has been added to your organisation: {User.username}')
-            return render_template('admin_dashboard.html')
-    else:
-        flash('You do not have permission to access this page.', 'danger')
-        return render_template('index.html')
 
 @account_bp.route('/register_organisation', methods=['GET', 'POST'])
 def register_organisation():
     form = RegistrationForm()
     if request.method == 'POST' and form.validate_on_submit():
+        account_type = types_of_accounts[0]
+        new_token = generate_code(email, account_type)
+        send_verification_email(email, new_token)
+        
         organisation_name = form.organisation_name.data
         email = form.email.data
         password = form.password.data
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+        time_of_creation = datetime.now()
         
         new_organisation = Organisation(
             name=organisation_name,
             email=email,
-            password=hashed_password
+            password=hashed_password,
+            logo= 'default.jpg',
+            created_at=time_of_creation,
+            updated_at=time_of_creation,
+            verified=0,
+            last_generated_code=new_token,
+            last_generated_code_time=time_of_creation
         )
         
         db.session.add(new_organisation)
         db.session.commit()
         send_email(Organisation.email, 'Welcome!', 'Your account has been created.')
         flash('Organisation registered successfully.', 'success')
-        return redirect(url_for('account.login'))
+        return redirect(url_for('account.verify_account'))
     
     return render_template('register.html', form=form)
         
@@ -175,51 +183,51 @@ def verify_account():
     if request.method == 'POST':
         verification_code = request.form.get('verification_code')
         email = request.form.get('email')
+        account = db.session.query(types_of_accounts[0]).filter_by(email=request.form.get('email')).first()
         account_type = request.form.get('account_type')
 
-        token_verified = verify_paseto_token(verification_code, email, account_type)
+        token_verified = verify_code(verification_code, email, account_type)
         
         if token_verified == True:
-            if account_type == 'organisation':
-                organisation = Organisation.query.filter_by(email=email).first()
-                account.verified = 1
-                db.session.commit()
-                flash('Account successfully verified.', 'success')
-                return redirect(url_for('account.admin_dashboard'))
-            else:
-                account = User.query.filter_by(email=email).first()
-                account.verified = 1
-                db.session.commit()
-                flash('Account successfully verified.', 'success')
-                return redirect(url_for('main.index'))
+            account_type.query.filter_by(email=email).first()
+            account.verified = 1
+            db.session.commit()
+            flash('Account successfully verified.', 'success')
+            
         else:
             flash('Invalid verification code. Please try again.', 'danger')
-            return redirect(url_for('main.verify_account'))
+            return redirect(url_for('account.verify_account'))
 
     return render_template('verification.html')
 
 @account_bp.route('/resend_verification', methods=['POST'])
 def resend_verification():
     email = request.form['email']
-    account_type = request.form['account_type']
+    account_type_str = request.form['account_type']
     token = request.form['token']
 
+    # Get the model class from the account type string
+    account_type = ACCOUNT_TYPE_MAP.get(account_type_str)
+    if not account_type:
+        flash('Invalid account type.', 'danger')
+        return redirect(url_for('account.verify_account', email=email, account_type=account_type_str))
+
     # Verify the token
-    token_verified = verify_paseto_token(token, email, account_type)
+    token_verified = verify_code(token, email, account_type_str)
 
     if not token_verified:
         # Token is invalid or expired
         token = None
 
         # Generate a new verification code
-        new_token = generate_paseto_token(email, account_type)
+        new_token = generate_code(email, account_type_str)
 
         # Send the new verification code to the user
-        resend_verification_email(email, new_token)
+        resend_verification_email(email, account_type_str)
 
         flash('A new verification email has been sent.', 'info')
     else:
         flash('The verification code is still valid.', 'info')
-        resend_verification_email(email, token)
+        resend_verification_email(email, account_type_str)
         flash('A new verification email has been sent.', 'info')
-    return redirect(url_for('main.verify_account', email=email, account_type=account_type))
+    return redirect(url_for('account.verify_account', email=email, account_type=account_type_str))
