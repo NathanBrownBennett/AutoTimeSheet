@@ -1,6 +1,7 @@
 # Ignore environment variable files
 .env
 autorun.flaskenv
+pyvenv.cfg
 
 # Ignore Python bytecode files
 __pycache__/
