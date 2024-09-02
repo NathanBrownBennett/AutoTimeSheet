@@ -8,6 +8,13 @@ from ..Server_Side_Processing.verify_paseto import generate_code
 from ..init_extensions import mail
 from dotenv import load_dotenv
 import os
+import smtplib
+from flask import current_app
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
+import requests
+from requests.auth import HTTPBasicAuth
 
 mail = Mail()
 load_dotenv()
@@ -15,14 +22,48 @@ load_dotenv()
 def init_mail(app):
     mail.init_app(app)
     load_email_config(app)
+    
+def get_oauth2_token():
+    tenant_id = os.getenv('TENANT_ID')
+    client_id = os.getenv('CLIENT_ID')
+    client_secret = os.getenv('CLIENT_SECRET')
+    authority_url = f'https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token'
+    
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+    }
+    data = {
+        'grant_type': 'client_credentials',
+        'client_id': client_id,
+        'client_secret': client_secret,
+        'scope': 'https://outlook.office365.com/.default'
+    }
 
-def send_email(subject, recipients, body):
-    try:
-        msg = Message(subject, recipients=recipients)
-        msg.body = body
-        mail.send(msg)
-    except ConnectionRefusedError as e:
-        current_app.logger.error(f"Error: {e}")
+    response = requests.post(authority_url, headers=headers, data=data, auth=HTTPBasicAuth(client_id, client_secret))
+    response.raise_for_status()
+    token = response.json()['access_token']
+    
+    return token
+
+def send_email(subject, recipient, body):
+    access_token = get_oauth2_token()
+    smtp_server = "smtp.office365.com"
+    smtp_port = 587
+
+    msg = MIMEMultipart()
+    msg['From'] = os.getenv('EMAIL')
+    msg['To'] = recipient
+    msg['Subject'] = subject
+
+    msg.attach(MIMEText(body, 'plain'))
+
+    with smtplib.SMTP(smtp_server, smtp_port) as server:
+        server.ehlo()
+        server.starttls()
+        server.ehlo()
+        server.login("USERNAME", access_token)
+        server.sendmail(os.getenv('EMAIL'), recipient, msg.as_string())
+        server.quit()
 
 def load_email_config(app):
     with app.app_context():  # Ensure this is within the application context
@@ -57,7 +98,7 @@ def request_company_name_change(organisation_id, new_company_name):
 def send_verification_email(email, account_type):
     try:
         token = generate_code(email, account_type)
-        verification_url = url_for('account.verify', token=token, _external=True)
+        verification_url = url_for('account.verify_account', token=token, _external=True)
         msg = Message("Verification Email", recipients=[email])
         msg.body = f'Please verify your account by clicking the following link: {verification_url}'
         mail.send(msg)

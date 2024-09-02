@@ -139,13 +139,13 @@ def register_organisation():
     form = RegistrationForm()
     if request.method == 'POST' and form.validate_on_submit():
         account_type = types_of_accounts[0]
+        organisation_name = form.organisation_name.data
+        password = form.password.data
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+        email = form.email.data
         new_token = generate_code(email, account_type)
         send_verification_email(email, new_token)
         
-        organisation_name = form.organisation_name.data
-        email = form.email.data
-        password = form.password.data
-        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
         time_of_creation = datetime.now()
         
         new_organisation = Organisation(
