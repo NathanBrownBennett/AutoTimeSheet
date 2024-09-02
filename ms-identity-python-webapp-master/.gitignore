@@ -89,6 +89,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+ms-identity-python-webapp-master/
 
 # Spyder project settings
 .spyderproject
